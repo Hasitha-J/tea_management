@@ -13,6 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug - List Files
+        run: |
+          pwd
+          ls -R
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -23,10 +28,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --no-package-lock
 
       - name: Build Web App
         run: npm run build
@@ -35,7 +39,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: npx @capacitor/cli sync android
 
       - name: Build Android APK
         run: |
