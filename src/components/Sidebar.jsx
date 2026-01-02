@@ -14,7 +14,7 @@ const Sidebar = () => {
     ];
 
     return (
-        <aside className="w-64 bg-emerald-900 text-white min-h-screen flex flex-col shadow-xl">
+        <aside className="hidden md:flex w-64 bg-emerald-900 text-white min-h-screen flex-col shadow-xl">
             <div className="p-6 flex items-center space-x-3 border-b border-emerald-800">
                 <Leaf className="text-emerald-400" size={28} />
                 <h1 className="text-xl font-bold tracking-wide">TeaEstate<span className="text-emerald-400">Pro</span></h1>

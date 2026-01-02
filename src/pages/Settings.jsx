@@ -56,28 +56,28 @@ const Settings = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 pb-10">
+            <div className="mb-4 md:mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
                     <SettingsIcon className="text-emerald-600" />
                     {t('settings')} & Master Data
                 </h2>
-                <p className="text-gray-500 mt-1">Manage standard rates for estate activities.</p>
+                <p className="text-sm md:text-base text-gray-500 mt-1">Manage standard rates for estate activities.</p>
             </div>
 
             {/* General Settings */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
                     <h3 className="font-bold text-gray-800">{t('generalSettings')}</h3>
                 </div>
-                <div className="p-6">
+                <div className="p-5">
                     <div className="flex items-center justify-between">
-                        <div>
+                        <div className="pr-4">
                             <p className="font-medium text-gray-800">{t('language')}</p>
-                            <p className="text-xs text-gray-500">Select your preferred UI language.</p>
+                            <p className="text-[10px] md:text-xs text-gray-500">Select your preferred UI language.</p>
                         </div>
                         <select
-                            className="border rounded-lg px-4 py-2 text-sm bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            className="border rounded-lg px-3 py-1.5 md:px-4 md:py-2 text-sm bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             value={language}
                             onChange={(e) => setLanguage(e.target.value)}
                         >
@@ -89,17 +89,17 @@ const Settings = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
                     <h3 className="font-bold text-gray-800">{t('activity')} Rates</h3>
                 </div>
 
                 {status.message && (
-                    <div className={`mx-6 mt-4 p-3 rounded-lg text-sm ${status.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                    <div className={`mx-5 mt-4 p-3 rounded-lg text-sm ${status.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
                         {status.message}
                     </div>
                 )}
 
-                <div className="p-6">
+                <div className="p-0 overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-gray-500 font-medium border-b border-gray-100">
                             <tr>

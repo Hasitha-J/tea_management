@@ -1,0 +1,16 @@
+{
+    "name": "Tea Estate Manager",
+    "short_name": "TeaEstate",
+    "start_url": "/tea_management/",
+    "display": "standalone",
+    "background_color": "#064e3b",
+    "theme_color": "#064e3b",
+    "description": "Tea Estate Management System",
+    "icons": [
+        {
+            "src": "vite.svg",
+            "sizes": "32x32",
+            "type": "image/svg+xml"
+        }
+    ]
+}

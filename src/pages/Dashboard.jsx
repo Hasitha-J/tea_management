@@ -79,10 +79,10 @@ const Dashboard = () => {
     const { summary, fields } = data;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
             <div>
-                <h2 className="text-3xl font-bold text-gray-800">{t('dashboard')} Overview</h2>
-                <p className="text-gray-500 mt-1">Real-time profitability tracking across all fields.</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{t('dashboard')} Overview</h2>
+                <p className="text-sm md:text-base text-gray-500 mt-1">Real-time profitability tracking across all fields.</p>
             </div>
 
             {/* Summary Cards */}
@@ -137,7 +137,7 @@ const Dashboard = () => {
 };
 
 const SummaryCard = ({ title, amount, icon, bg, border, highlight }) => (
-    <div className={`p-6 rounded-xl shadow-sm border ${bg} ${border} transition-transform hover:scale-105 duration-200`}>
+    <div className={`p-4 md:p-6 rounded-xl shadow-sm border ${bg} ${border} transition-transform hover:scale-105 duration-200`}>
         <div className="flex items-start justify-between">
             <div>
                 <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">{title}</p>

@@ -240,17 +240,17 @@ const ExpenseForm = () => {
     };
 
     return (
-        <div className="max-w-3xl mx-auto space-y-8">
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="max-w-3xl mx-auto space-y-6 md:space-y-8 pb-10">
+            <div className="mb-4 md:mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
                     <HandCoins className="text-emerald-600" />
                     {t('logExpenses')}
                 </h2>
-                <p className="text-gray-500 mt-1">{t('logExpensesDesc')}</p>
+                <p className="text-sm md:text-base text-gray-500 mt-1">{t('logExpensesDesc')}</p>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white p-5 md:p-8 rounded-xl shadow-sm border border-gray-100">
+                <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -282,7 +282,7 @@ const ExpenseForm = () => {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('expenseType')}</label>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                             {[
                                 { id: 'labor_cost', label: t('labor') },
                                 { id: 'goods_cost', label: t('goods') },
@@ -290,7 +290,7 @@ const ExpenseForm = () => {
                                 { id: 'owner_labor', label: t('ownerLabor') }
                             ].map(type => (
                                 <label key={type.id} className={`
-                  flex-1 cursor-pointer border rounded-lg p-3 text-center transition-all min-w-[140px]
+                  cursor-pointer border rounded-lg p-2.5 md:p-3 text-center transition-all text-sm
                   ${formData.type === type.id
                                         ? 'bg-emerald-50 border-emerald-500 text-emerald-700 font-medium ring-1 ring-emerald-500'
                                         : 'border-gray-200 hover:bg-gray-50'}

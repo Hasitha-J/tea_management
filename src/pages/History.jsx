@@ -103,30 +103,30 @@ const History = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-20">
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-10">
+            <div className="mb-4 md:mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
                     <HistoryIcon className="text-emerald-600" />
                     {t('history')}
                 </h2>
-                <p className="text-gray-500 mt-1">{t('historyDesc')}</p>
+                <p className="text-sm md:text-base text-gray-500 mt-1">{t('historyDesc')}</p>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-gray-500 mb-1">{t('totalIncomeRec')}</p>
-                        <p className="text-2xl font-bold text-emerald-600">Rs. {totalIncome.toLocaleString()}</p>
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalIncomeRec')}</p>
+                        <p className="text-xl md:text-2xl font-bold text-emerald-600">Rs. {totalIncome.toLocaleString()}</p>
                     </div>
-                    <ArrowUpCircle className="text-emerald-100" size={40} fill="currentColor" />
+                    <ArrowUpCircle className="text-emerald-100" size={32} md:size={40} fill="currentColor" />
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-gray-500 mb-1">{t('totalExpenseRec')}</p>
-                        <p className="text-2xl font-bold text-red-600">Rs. {totalExpense.toLocaleString()}</p>
+                        <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalExpenseRec')}</p>
+                        <p className="text-xl md:text-2xl font-bold text-red-600">Rs. {totalExpense.toLocaleString()}</p>
                     </div>
-                    <ArrowDownCircle className="text-red-100" size={40} fill="currentColor" />
+                    <ArrowDownCircle className="text-red-100" size={32} md:size={40} fill="currentColor" />
                 </div>
             </div>
 
