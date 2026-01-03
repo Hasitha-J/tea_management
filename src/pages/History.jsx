@@ -102,162 +102,190 @@ const History = () => {
         }
     };
 
+    const [expandedId, setExpandedId] = useState(null);
+
+    const toggleRow = (id) => {
+        if (editingId || deleteConfirmId) return; // Don't toggle while editing/deleting
+        setExpandedId(expandedId === id ? null : id);
+    };
+
     return (
-        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-10">
-            <div className="mb-4 md:mb-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
-                    <HistoryIcon className="text-emerald-600" />
-                    {t('history')}
-                </h2>
-                <p className="text-sm md:text-base text-gray-500 mt-1">{t('historyDesc')}</p>
-            </div>
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32">
+            <div className="px-4 md:px-0">
+                <div className="mb-4 md:mb-8">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+                        <HistoryIcon className="text-emerald-600" />
+                        {t('history')}
+                    </h2>
+                    <p className="text-sm md:text-base text-gray-500 mt-1">{t('historyDesc')}</p>
+                </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalIncomeRec')}</p>
-                        <p className="text-xl md:text-2xl font-bold text-emerald-600">Rs. {totalIncome.toLocaleString()}</p>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+                    <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalIncomeRec')}</p>
+                            <p className="text-xl md:text-2xl font-bold text-emerald-600">Rs. {totalIncome.toLocaleString()}</p>
+                        </div>
+                        <ArrowUpCircle className="text-emerald-100" size={32} md:size={40} fill="currentColor" />
                     </div>
-                    <ArrowUpCircle className="text-emerald-100" size={32} md:size={40} fill="currentColor" />
-                </div>
-                <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalExpenseRec')}</p>
-                        <p className="text-xl md:text-2xl font-bold text-red-600">Rs. {totalExpense.toLocaleString()}</p>
+                    <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs md:text-sm text-gray-500 mb-1">{t('totalExpenseRec')}</p>
+                            <p className="text-xl md:text-2xl font-bold text-red-600">Rs. {totalExpense.toLocaleString()}</p>
+                        </div>
+                        <ArrowDownCircle className="text-red-100" size={32} md:size={40} fill="currentColor" />
                     </div>
-                    <ArrowDownCircle className="text-red-100" size={32} md:size={40} fill="currentColor" />
                 </div>
+
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 mb-6">
+                    <button
+                        className={`px-6 py-3 font-medium text-sm transition-colors relative
+                            ${activeTab === 'income' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
+                        `}
+                        disabled={editingId !== null || deleteConfirmId !== null}
+                        onClick={() => { setActiveTab('income'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
+                    >
+                        {t('recentIncome')}
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium text-sm transition-colors relative
+                            ${activeTab === 'expenses' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
+                        `}
+                        disabled={editingId !== null || deleteConfirmId !== null}
+                        onClick={() => { setActiveTab('expenses'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
+                    >
+                        {t('recentExpenses')}
+                    </button>
+                </div>
+
+                {status.message && (
+                    <div className={`p-4 rounded-lg text-sm flex items-center gap-2 mb-6 ${status.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                        <Check size={18} />
+                        {status.message}
+                    </div>
+                )}
             </div>
 
-            {status.message && (
-                <div className={`p-4 rounded-lg text-sm flex items-center gap-2 ${status.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                    <Check size={18} />
-                    {status.message}
-                </div>
-            )}
-
-            {/* Tabs */}
-            <div className="flex border-b border-gray-200">
-                <button
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative
-                        ${activeTab === 'income' ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-700'}
-                    `}
-                    disabled={editingId !== null || deleteConfirmId !== null}
-                    onClick={() => { setActiveTab('income'); setStatus({ type: '', message: '' }); }}
-                >
-                    {t('recentIncome')}
-                </button>
-                <button
-                    className={`px-6 py-3 font-medium text-sm transition-colors relative
-                        ${activeTab === 'expenses' ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-700'}
-                    `}
-                    disabled={editingId !== null || deleteConfirmId !== null}
-                    onClick={() => { setActiveTab('expenses'); setStatus({ type: '', message: '' }); }}
-                >
-                    {t('recentExpenses')}
-                </button>
-            </div>
-
-            {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden min-h-[400px]">
+            {/* Data List (Minimalist Table) */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-4 md:mx-0">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-gray-500 bg-gray-50 font-medium border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-3">{t('date')}</th>
-                                <th className="px-6 py-3">{t('field')}</th>
-                                <th className="px-6 py-3">{t('typeCrop')}</th>
-                                <th className="px-6 py-3">{t('details')}</th>
-                                <th className="px-6 py-3 text-right">{t('total')}</th>
-                                <th className="px-6 py-3 text-right w-32">{t('actions')}</th>
+                                <th className="px-4 md:px-6 py-3">{t('date')}</th>
+                                <th className="px-4 md:px-6 py-3">{t('field')}</th>
+                                <th className="px-4 md:px-6 py-3 text-right">{t('total')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {activeTab === 'expenses' ? (
-                                transactions.map((t) => (
-                                    <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3">
-                                            {editingId === t.id ? (
-                                                <input type="date" className="border rounded px-2 py-1" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} />
-                                            ) : t.date}
+                            {(activeTab === 'expenses' ? transactions : harvests).map((item) => (
+                                <React.Fragment key={item.id}>
+                                    <tr
+                                        onClick={() => toggleRow(item.id)}
+                                        className={`cursor-pointer transition-colors ${expandedId === item.id ? 'bg-emerald-50/30' : 'hover:bg-gray-50'}`}
+                                    >
+                                        <td className="px-4 md:px-6 py-4 text-gray-600 whitespace-nowrap">
+                                            {item.date}
                                         </td>
-                                        <td className="px-6 py-3 font-medium text-gray-800">{t.field_name}</td>
-                                        <td className="px-6 py-3 capitalize">{t.type?.replace('_', ' ')}</td>
-                                        <td className="px-6 py-3 text-gray-600">
-                                            {editingId === t.id ? (
-                                                <input type="text" className="border rounded px-2 py-1 w-full" value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
-                                            ) : t.description || '-'}
+                                        <td className="px-4 md:px-6 py-4 font-medium text-gray-800">
+                                            {item.field_name}
                                         </td>
-                                        <td className="px-6 py-3 text-right font-bold text-gray-800">
-                                            {editingId === t.id ? (
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <input type="number" className="border rounded px-2 py-1 w-24 text-right" value={editForm.rate} onChange={e => setEditForm({ ...editForm, rate: e.target.value })} placeholder="Rate" />
-                                                    <span className="text-[10px] text-gray-400">Rate x Qty</span>
-                                                </div>
-                                            ) : `Rs. ${t.total_amount?.toLocaleString()}`}
-                                        </td>
-                                        <td className="px-6 py-3 text-right">
-                                            {editingId === t.id ? (
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => handleSave(t.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"><Check size={18} /></button>
-                                                    <button onClick={cancelAction} className="p-1 text-gray-400 hover:bg-gray-50 rounded"><X size={18} /></button>
-                                                </div>
-                                            ) : deleteConfirmId === t.id ? (
-                                                <div className="flex justify-end gap-2 bg-red-50 p-1 rounded border border-red-100">
-                                                    <button onClick={() => handleDelete(t.id)} className="text-[10px] font-bold text-red-600 hover:underline">{t('confirm').toUpperCase()}</button>
-                                                    <button onClick={cancelAction} className="p-0.5 text-gray-400 hover:bg-white rounded"><X size={14} /></button>
-                                                </div>
-                                            ) : (
-                                                <div className="flex justify-end gap-2 text-gray-400">
-                                                    <button onClick={() => startEdit(t)} className="hover:text-emerald-600 transition-colors"><Edit2 size={16} /></button>
-                                                    <button onClick={() => setDeleteConfirmId(t.id)} className="hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                </div>
-                                            )}
+                                        <td className={`px-4 md:px-6 py-4 text-right font-bold ${activeTab === 'income' ? 'text-emerald-600' : 'text-gray-900'}`}>
+                                            Rs. {item.total_amount?.toLocaleString()}
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                harvests.map((h) => (
-                                    <tr key={h.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3">
-                                            {editingId === h.id ? (
-                                                <input type="date" className="border rounded px-2 py-1" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} />
-                                            ) : h.date}
-                                        </td>
-                                        <td className="px-6 py-3 font-medium text-gray-800">{h.field_name}</td>
-                                        <td className="px-6 py-3 capitalize">{t(h.crop_type) || h.crop_type}</td>
-                                        <td className="px-6 py-3 text-gray-600">
-                                            {editingId === h.id ? (
-                                                <div className="flex gap-2">
-                                                    <input type="number" className="border rounded px-2 py-1 w-20" value={editForm.weight} onChange={e => setEditForm({ ...editForm, weight: e.target.value })} placeholder="kg" />
-                                                    <input type="number" className="border rounded px-2 py-1 w-20" value={editForm.rate} onChange={e => setEditForm({ ...editForm, rate: e.target.value })} placeholder="Rs/kg" />
+
+                                    {/* Expanded Detail View */}
+                                    {expandedId === item.id && (
+                                        <tr className="bg-emerald-50/30">
+                                            <td colSpan="3" className="px-4 md:px-6 py-4 border-t border-emerald-100/50">
+                                                <div className="space-y-4">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">{t('typeCrop')}</p>
+                                                            {editingId === item.id ? (
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full border rounded px-2 py-1"
+                                                                    value={activeTab === 'income' ? editForm.crop_type : editForm.type}
+                                                                    onChange={e => setEditForm({ ...editForm, [activeTab === 'income' ? 'crop_type' : 'type']: e.target.value })}
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm font-medium text-gray-700 capitalize">
+                                                                    {activeTab === 'income' ? (t(item.crop_type) || item.crop_type) : item.type?.replace('_', ' ')}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">{t('details')}</p>
+                                                            {editingId === item.id ? (
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full border rounded px-2 py-1"
+                                                                    value={activeTab === 'income' ? `${editForm.weight} kg @ ${editForm.rate}` : editForm.description}
+                                                                    onChange={e => setEditForm({ ...editForm, [activeTab === 'income' ? 'description' : 'description']: e.target.value })}
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-gray-600">
+                                                                    {activeTab === 'income' ? `${item.weight} kg @ Rs. ${item.rate}` : (item.description || '-')}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between pt-2 border-t border-emerald-100/30">
+                                                        <div className="flex gap-3">
+                                                            {editingId === item.id ? (
+                                                                <>
+                                                                    <button onClick={() => handleSave(item.id)} className="px-3 py-1 bg-emerald-600 text-white rounded text-xs flex items-center gap-1">
+                                                                        <Check size={14} /> {t('save')}
+                                                                    </button>
+                                                                    <button onClick={cancelAction} className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs flex items-center gap-1">
+                                                                        <X size={14} /> {t('cancel')}
+                                                                    </button>
+                                                                </>
+                                                            ) : deleteConfirmId === item.id ? (
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-xs text-red-600 font-bold">{t('confirm')}?</p>
+                                                                    <button onClick={() => handleDelete(item.id)} className="px-3 py-1 bg-red-600 text-white rounded text-xs uppercase">
+                                                                        {t('delete')}
+                                                                    </button>
+                                                                    <button onClick={cancelAction} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                                        <X size={18} />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <button onClick={(e) => { e.stopPropagation(); startEdit(item); }} className="p-2 text-emerald-600 hover:bg-white rounded transition-colors flex items-center gap-1 text-xs">
+                                                                        <Edit2 size={16} /> {t('edit')}
+                                                                    </button>
+                                                                    <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(item.id); }} className="p-2 text-red-400 hover:bg-white rounded transition-colors flex items-center gap-1 text-xs">
+                                                                        <Trash2 size={16} /> {t('delete')}
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setExpandedId(null); }}
+                                                            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                                                        >
+                                                            {t('close')}
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            ) : `${h.weight} kg @ Rs. ${h.rate}`}
-                                        </td>
-                                        <td className="px-6 py-3 text-right font-bold text-emerald-600">
-                                            Rs. {h.total_amount?.toLocaleString()}
-                                        </td>
-                                        <td className="px-6 py-3 text-right">
-                                            {editingId === h.id ? (
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => handleSave(h.id)} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"><Check size={18} /></button>
-                                                    <button onClick={cancelAction} className="p-1 text-gray-400 hover:bg-gray-50 rounded"><X size={18} /></button>
-                                                </div>
-                                            ) : deleteConfirmId === h.id ? (
-                                                <div className="flex justify-end gap-2 bg-red-50 p-1 rounded border border-red-100">
-                                                    <button onClick={() => handleDelete(h.id)} className="text-[10px] font-bold text-red-600 hover:underline">{t('confirm').toUpperCase()}</button>
-                                                    <button onClick={cancelAction} className="p-0.5 text-gray-400 hover:bg-white rounded"><X size={14} /></button>
-                                                </div>
-                                            ) : (
-                                                <div className="flex justify-end gap-2 text-gray-400">
-                                                    <button onClick={() => startEdit(h)} className="hover:text-emerald-600 transition-colors"><Edit2 size={16} /></button>
-                                                    <button onClick={() => setDeleteConfirmId(h.id)} className="hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                            {(activeTab === 'expenses' ? transactions : harvests).length === 0 && (
+                                <tr>
+                                    <td colSpan="3" className="px-6 py-12 text-center text-gray-400">
+                                        {t('noData')}
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>

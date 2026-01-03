@@ -111,25 +111,26 @@ const Dashboard = () => {
                 />
             </div>
 
-            {/* Charts */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Field-wise Profitability</h3>
-                <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={fields}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="field_name" />
-                            <YAxis />
-                            <Tooltip
-                                formatter={(value) => `Rs. ${value.toLocaleString()}`}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Legend />
-                            <Bar dataKey="total_income" name={t('income')} fill="#10b981" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="total_expense" name={t('expense')} fill="#ef4444" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="net_profit" name={t('netProfit')} fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 font-display">Field-wise Profitability</h3>
+                <div className="overflow-x-auto">
+                    <div className="h-80 min-w-[600px] md:min-w-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={fields}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="field_name" />
+                                <YAxis />
+                                <Tooltip
+                                    formatter={(value) => `Rs. ${value.toLocaleString()}`}
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Legend />
+                                <Bar dataKey="total_income" name={t('income')} fill="#10b981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="total_expense" name={t('expense')} fill="#ef4444" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="net_profit" name={t('netProfit')} fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
         </div>

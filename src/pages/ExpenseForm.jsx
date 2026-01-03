@@ -383,57 +383,6 @@ const ExpenseForm = () => {
                 </form>
             </div>
 
-            {/* Expense History Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-800">{t('recentExpenses')}</h3>
-                    <span className="text-xs font-medium bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{transactions.length} {t('records')}</span>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-gray-500 bg-gray-50 font-medium border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-3">{t('date')}</th>
-                                <th className="px-6 py-3">{t('field')}</th>
-                                <th className="px-6 py-3">{t('expenseType')}</th>
-                                <th className="px-6 py-3">{t('descriptionItem')}</th>
-                                <th className="px-6 py-3 text-right">{t('total')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {transactions.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-400">
-                                        {t('noExpenses')}
-                                    </td>
-                                </tr>
-                            ) : (
-                                transactions.map((t) => (
-                                    <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3 text-gray-600">{t.date}</td>
-                                        <td className="px-6 py-3 font-medium text-gray-800">{t.field_name}</td>
-                                        <td className="px-6 py-3">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium capitalize 
-                        ${t.type === 'labor_cost' ? 'bg-blue-50 text-blue-700' :
-                                                    t.type === 'goods_cost' ? 'bg-amber-50 text-amber-700' :
-                                                        t.type === 'overhead' ? 'bg-purple-50 text-purple-700' :
-                                                            'bg-gray-100 text-gray-700'}`}>
-                                                {t.type.replace('_', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3 text-gray-600">
-                                            {t.description || (t.category_id ? `Category ID: ${t.category_id}` : '-')}
-                                        </td>
-                                        <td className="px-6 py-3 text-right font-bold text-gray-800">
-                                            Rs. {t.total_amount?.toLocaleString()}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 };
