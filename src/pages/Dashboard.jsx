@@ -8,6 +8,7 @@ const Dashboard = () => {
     const { t } = useLanguage();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedFieldId, setSelectedFieldId] = useState('all');
 
     useEffect(() => {
         fetchDashboardData();
@@ -78,56 +79,98 @@ const Dashboard = () => {
 
     const { summary, fields } = data;
 
+    const filteredFields = selectedFieldId === 'all'
+        ? fields
+        : fields.filter(f => f.field_id === parseInt(selectedFieldId));
+
+    const displaySummary = selectedFieldId === 'all'
+        ? summary
+        : {
+            total_income: filteredFields[0]?.total_income || 0,
+            total_expense: filteredFields[0]?.total_expense || 0,
+            total_profit: filteredFields[0]?.net_profit || 0
+        };
+
     return (
-        <div className="space-y-6 md:space-y-8">
-            <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{t('dashboard')} Overview</h2>
-                <p className="text-sm md:text-base text-gray-500 mt-1">Real-time profitability tracking across all fields.</p>
+        <div className="space-y-6 md:space-y-8 pb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{t('dashboard')}</h2>
+                    <p className="text-sm md:text-base text-gray-500 mt-1">Real-time profitability tracking.</p>
+                </div>
+
+                <div className="w-full md:w-64">
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Field</label>
+                    <select
+                        value={selectedFieldId}
+                        onChange={(e) => setSelectedFieldId(e.target.value)}
+                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 outline-none appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.5em' }}
+                    >
+                        <option value="all">All Fields</option>
+                        {fields.map(f => (
+                            <option key={f.field_id} value={f.field_id}>{f.field_name}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
-            {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <SummaryCard
                     title={t('totalIncome')}
-                    amount={summary.total_income}
+                    amount={displaySummary.total_income}
                     icon={<TrendingUp className="text-emerald-500" size={24} />}
                     bg="bg-emerald-50"
                     border="border-emerald-100"
                 />
                 <SummaryCard
                     title={t('totalExpense')}
-                    amount={summary.total_expense}
+                    amount={displaySummary.total_expense}
                     icon={<TrendingDown className="text-red-500" size={24} />}
                     bg="bg-red-50"
                     border="border-red-100"
                 />
                 <SummaryCard
                     title={t('netProfit')}
-                    amount={summary.total_profit}
-                    icon={<BadgeDollarSign className={summary.total_profit >= 0 ? "text-emerald-600" : "text-red-600"} size={24} />}
-                    bg={summary.total_profit >= 0 ? "bg-emerald-50" : "bg-red-50"}
-                    border={summary.total_profit >= 0 ? "border-emerald-200" : "border-red-200"}
+                    amount={displaySummary.total_profit}
+                    icon={<BadgeDollarSign className={displaySummary.total_profit >= 0 ? "text-emerald-600" : "text-red-600"} size={24} />}
+                    bg={displaySummary.total_profit >= 0 ? "bg-emerald-50" : "bg-red-50"}
+                    border={displaySummary.total_profit >= 0 ? "border-emerald-200" : "border-red-200"}
                     highlight
                 />
             </div>
 
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-6 font-display">Field-wise Profitability</h3>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-800 font-display">
+                        {selectedFieldId === 'all' ? 'Field-wise Profitability' : `${filteredFields[0]?.field_name} Performance`}
+                    </h3>
+                </div>
                 <div className="overflow-x-auto">
-                    <div className="h-80 min-w-[600px] md:min-w-0">
+                    <div className="h-80 min-w-[300px] md:min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={fields}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="field_name" />
-                                <YAxis />
+                            <BarChart data={filteredFields}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                <XAxis
+                                    dataKey="field_name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                    tickFormatter={(val) => `Rs.${val / 1000}k`}
+                                />
                                 <Tooltip
                                     formatter={(value) => `Rs. ${value.toLocaleString()}`}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
-                                <Legend />
-                                <Bar dataKey="total_income" name={t('income')} fill="#10b981" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="total_expense" name={t('expense')} fill="#ef4444" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="net_profit" name={t('netProfit')} fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                <Legend verticalAlign="top" align="right" height={36} iconType="circle" />
+                                <Bar dataKey="total_income" name={t('income')} fill="#10b981" radius={[4, 4, 0, 0]} barSize={selectedFieldId === 'all' ? 20 : 60} />
+                                <Bar dataKey="total_expense" name={t('expense')} fill="#ef4444" radius={[4, 4, 0, 0]} barSize={selectedFieldId === 'all' ? 20 : 60} />
+                                <Bar dataKey="net_profit" name={t('netProfit')} fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={selectedFieldId === 'all' ? 20 : 60} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
