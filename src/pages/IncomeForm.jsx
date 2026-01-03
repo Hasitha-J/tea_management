@@ -39,8 +39,20 @@ const IncomeForm = () => {
         setStatus({ type: '', message: '' });
 
         const isTea = formData.crop_type === 'tea';
-        if (!formData.field_id || !formData.weight || (!isTea && !formData.rate) || (isTea && !formData.collector_id)) {
-            setStatus({ type: 'error', message: 'Please fill all required fields.' });
+        const isCash = formData.collector_id === 'cash';
+
+        if (!formData.field_id || !formData.weight) {
+            setStatus({ type: 'error', message: 'Field and weight are required.' });
+            return;
+        }
+
+        if ((!isTea || isCash) && !formData.rate) {
+            setStatus({ type: 'error', message: 'Rate is required for cash sales/non-tea crops.' });
+            return;
+        }
+
+        if (isTea && !isCash && !formData.collector_id) {
+            setStatus({ type: 'error', message: 'Please select a collector.' });
             return;
         }
 
@@ -50,7 +62,7 @@ const IncomeForm = () => {
             crop_type: formData.crop_type,
             weight: parseFloat(formData.weight) || 0,
             rate: parseFloat(formData.rate) || null,
-            collector_id: isTea ? parseInt(formData.collector_id) : null,
+            collector_id: (isTea && !isCash) ? parseInt(formData.collector_id) : null,
             total_amount: (parseFloat(formData.weight) && parseFloat(formData.rate))
                 ? parseFloat(formData.weight) * parseFloat(formData.rate)
                 : 0
@@ -61,8 +73,8 @@ const IncomeForm = () => {
             const { error: harvestError } = await supabase.from('harvests').insert([payload]);
             if (harvestError) throw harvestError;
 
-            // 2. If tea and advance provided, insert advance record
-            if (isTea && formData.advance_amount && parseFloat(formData.advance_amount) > 0) {
+            // 2. If tea (NOT cash) and advance provided, insert advance record
+            if (isTea && !isCash && formData.advance_amount && parseFloat(formData.advance_amount) > 0) {
                 const advancePayload = {
                     collector_id: parseInt(formData.collector_id),
                     date: formData.date,
@@ -166,6 +178,7 @@ const IncomeForm = () => {
                                     {collectors.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
+                                    <option value="cash" className="font-bold text-emerald-600">{t('cashSale')}</option>
                                 </select>
                             </div>
                             <div>
@@ -177,7 +190,8 @@ const IncomeForm = () => {
                                     onChange={handleChange}
                                     placeholder="0.00"
                                     step="0.01"
-                                    className="w-full px-4 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    disabled={formData.collector_id === 'cash'}
+                                    className={`w-full px-4 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${formData.collector_id === 'cash' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                         </div>
@@ -198,7 +212,9 @@ const IncomeForm = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('rate')} (Rs/kg) {formData.crop_type === 'tea' && `(${t('optional') || 'Optional'})`}</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                {t('rate')} (Rs/kg) {(formData.crop_type === 'tea' && formData.collector_id !== 'cash') && `(${t('optional') || 'Optional'})`}
+                            </label>
                             <input
                                 type="number"
                                 name="rate"

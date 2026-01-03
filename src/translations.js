@@ -115,6 +115,7 @@ export const translations = {
         allFields: "All Fields",
         pendingRate: "Rate Pending",
         selectCollector: "Select Collector...",
+        cashSale: "Cash Sale / Other",
     },
     si: {
         dashboard: "විශ්ලේෂණය",
@@ -232,5 +233,6 @@ export const translations = {
         allFields: "සියලුම වතු",
         pendingRate: "මිල තීරණය කර නොමැත",
         selectCollector: "එකතු කරන්නා තෝරන්න...",
+        cashSale: "අත්පිට මුදලට විකිණීම",
     }
 };

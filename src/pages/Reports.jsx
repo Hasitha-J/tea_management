@@ -137,6 +137,20 @@ const Reports = () => {
                 };
             }).filter(cs => cs.weight > 0 || cs.advances > 0);
 
+            // Add Cash Sale grouping
+            const cashHarvests = harvests.filter(h => h.collector_id === null && h.crop_type === 'tea');
+            if (cashHarvests.length > 0) {
+                const totalCashWeight = cashHarvests.reduce((s, h) => s + (h.weight || 0), 0);
+                const totalCashRevenue = cashHarvests.reduce((s, h) => s + (h.total_amount || 0), 0);
+                collectorSummary.push({
+                    name: t('cashSale') || 'Cash Sale / Other',
+                    weight: totalCashWeight,
+                    revenue: totalCashRevenue,
+                    advances: 0,
+                    balance: totalCashRevenue
+                });
+            }
+
             // Aggregates per field
             const fieldStats = fields.map(field => {
                 const income = harvests

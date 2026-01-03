@@ -271,7 +271,11 @@ const History = () => {
                                                             ) : (
                                                                 <p className="text-sm font-medium text-gray-700 capitalize">
                                                                     {activeTab === 'income' ? (t(item.crop_type) || item.crop_type) : item.type?.replace('_', ' ')}
-                                                                    {item.collector_name && <span className="text-xs text-emerald-600 ml-2">({item.collector_name})</span>}
+                                                                    {item.collector_name ? (
+                                                                        <span className="text-xs text-emerald-600 ml-2">({item.collector_name})</span>
+                                                                    ) : (
+                                                                        item.crop_type === 'tea' && <span className="text-xs text-amber-600 ml-2">({t('cashSale')})</span>
+                                                                    )}
                                                                 </p>
                                                             )}
                                                         </div>
