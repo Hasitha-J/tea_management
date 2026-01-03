@@ -15,8 +15,8 @@ const Sidebar = () => {
     return (
         <aside className="hidden md:flex w-64 bg-emerald-900 text-white min-h-screen flex-col shadow-xl">
             <div className="p-6 flex items-center space-x-3 border-b border-emerald-800">
-                <Leaf className="text-emerald-400" size={28} />
-                <h1 className="text-xl font-bold tracking-wide">TeaEstate<span className="text-emerald-400">Pro</span></h1>
+                <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-md" />
+                <h1 className="text-xl font-bold tracking-wide">TeaEstate<span className="text-emerald-400">Manager</span></h1>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-2">
                 {navItems.map((item) => (
