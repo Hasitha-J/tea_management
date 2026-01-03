@@ -111,45 +111,46 @@ const Reports = () => {
             // PDF Styling
             doc.setTextColor(34, 197, 94); // emerald-500
             doc.setFontSize(22);
-            doc.text(t('generateReport'), 14, 22);
+            // Use English labels for PDF content to avoid encoding issues with Sinhala in jspdf
+            doc.text("Estate Financial Report", 14, 22);
 
             doc.setTextColor(107, 114, 128); // gray-500
             doc.setFontSize(10);
-            doc.text(`${t('pdfPeriod')}: ${startDate} - ${endDate}`, 14, 30);
-            doc.text(`${t('pdfGeneratedOn')}: ${new Date().toLocaleDateString()}`, 14, 35);
+            doc.text(`Period: ${startDate} - ${endDate}`, 14, 30);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 35);
 
             // Summary Table
             doc.autoTable({
                 startY: 45,
-                head: [[t('field'), t('income'), t('expense'), t('netProfit')]],
+                head: [["Field", "Income", "Expense", "Net Profit"]],
                 body: reportData.fieldStats.map(f => [
-                    f.name,
+                    f.name || "Unnamed Field",
                     `Rs. ${f.income.toLocaleString()}`,
                     `Rs. ${f.expense.toLocaleString()}`,
                     `Rs. ${f.profit.toLocaleString()}`
                 ]),
-                foot: [[t('total'), `Rs. ${reportData.totalIncome.toLocaleString()}`, `Rs. ${reportData.totalExpense.toLocaleString()}`, `Rs. ${reportData.totalProfit.toLocaleString()}`]],
+                foot: [["Total", `Rs. ${reportData.totalIncome.toLocaleString()}`, `Rs. ${reportData.totalExpense.toLocaleString()}`, `Rs. ${reportData.totalProfit.toLocaleString()}`]],
                 theme: 'striped',
                 headStyles: { fillColor: [16, 185, 129] }
             });
 
             // Detailed Transactions if wanted?
             doc.addPage();
-            doc.text(t('pdfTransactionList'), 14, 20);
+            doc.text("Transaction Details", 14, 20);
 
             const allActions = [
-                ...reportData.harvests.map(h => ({ date: h.date, type: t('income'), field: h.fields?.name, details: h.crop_type, amount: h.total_amount })),
-                ...reportData.transactions.map(t => ({ date: t.date, type: t('expense'), field: t.fields?.name, details: t.description || t.expense_type, amount: t.total_amount }))
+                ...reportData.harvests.map(h => ({ date: h.date, type: "Income", field: h.fields?.name, details: h.crop_type, amount: h.total_amount })),
+                ...reportData.transactions.map(t => ({ date: t.date, type: "Expense", field: t.fields?.name, details: t.description || t.expense_type, amount: t.total_amount }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
             doc.autoTable({
                 startY: 25,
-                head: [[t('date'), t('type'), t('field'), t('details'), t('total')]],
+                head: [["Date", "Type", "Field", "Details", "Total"]],
                 body: allActions.map(a => [
                     a.date,
                     a.type,
-                    a.field,
-                    a.details,
+                    a.field || "General",
+                    a.details || "N/A",
                     `Rs. ${a.amount.toLocaleString()}`
                 ]),
                 theme: 'grid',
