@@ -284,6 +284,7 @@ const Reports = () => {
                             total_amount: (h.weight || 0) * up.rate
                         }));
                         await supabase.from('harvests').upsert(harvestUpdates);
+                        console.log(`Synced ${harvests.length} harvests for collector ${up.collector_id}`);
                     }
                 }
 

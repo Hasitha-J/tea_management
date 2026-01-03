@@ -19,24 +19,46 @@ const History = () => {
 
     const fetchData = async () => {
         try {
-            const [transRes, harvRes] = await Promise.all([
+            const [transRes, harvRes, ratesRes] = await Promise.all([
                 supabase.from('transactions').select('*, fields(name)').order('date', { ascending: false }),
-                supabase.from('harvests').select('*, fields(name), tea_collectors(name)').order('date', { ascending: false })
+                supabase.from('harvests').select('*, fields(name), tea_collectors(name)').order('date', { ascending: false }),
+                supabase.from('collector_rates').select('*')
             ]);
 
             if (transRes.error) throw transRes.error;
             if (harvRes.error) throw harvRes.error;
+            if (ratesRes.error) throw ratesRes.error;
+
+            const rates = ratesRes.data || [];
 
             const flattenedTrans = transRes.data.map(t => ({
                 ...t,
                 field_name: t.fields?.name
             }));
 
-            const flattenedHarv = harvRes.data.map(h => ({
-                ...h,
-                field_name: h.fields?.name,
-                collector_name: h.tea_collectors?.name
-            }));
+            const flattenedHarv = harvRes.data.map(h => {
+                let amount = h.total_amount || 0;
+                let rate = h.rate;
+
+                if (h.crop_type === 'tea' && (!h.rate || h.rate === 0)) {
+                    const hDate = new Date(h.date);
+                    const month = hDate.getMonth() + 1;
+                    const year = hDate.getFullYear();
+                    const monthlyRate = rates.find(r => r.collector_id === h.collector_id && r.month === month && r.year === year);
+                    if (monthlyRate) {
+                        rate = monthlyRate.rate;
+                        amount = (h.weight || 0) * monthlyRate.rate;
+                    }
+                }
+
+                return {
+                    ...h,
+                    rate,
+                    total_amount: amount,
+                    field_name: h.fields?.name,
+                    collector_name: h.tea_collectors?.name
+                };
+            });
 
             setTransactions(flattenedTrans);
             setHarvests(flattenedHarv);

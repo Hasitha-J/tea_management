@@ -47,16 +47,17 @@ const Collectors = () => {
 
     const syncHarvestRates = async (collector_id, month, year, rate) => {
         try {
+            if (!collector_id || !month || !year || !rate) return;
+
             // Calculate date range for the month
             const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
             const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
             // 1. Fetch all tea harvests for this collector in this month
-            // We update harvests where rate is null OR where it's a tea crop (since tea rates are usually monthly)
             const { data: harvests, error: fetchError } = await supabase
                 .from('harvests')
                 .select('id, weight')
-                .eq('collector_id', collector_id)
+                .eq('collector_id', parseInt(collector_id))
                 .eq('crop_type', 'tea')
                 .gte('date', startDate)
                 .lte('date', endDate);
@@ -64,18 +65,18 @@ const Collectors = () => {
             if (fetchError) throw fetchError;
 
             if (harvests && harvests.length > 0) {
+                const rateVal = parseFloat(rate);
                 // 2. Prepare updates
                 const updates = harvests.map(h => ({
                     id: h.id,
-                    rate: parseFloat(rate),
-                    total_amount: (h.weight || 0) * parseFloat(rate)
+                    rate: rateVal,
+                    total_amount: (h.weight || 0) * rateVal
                 }));
 
-                // 3. Perform bulk update (using upsert with IDs is a common way in Supabase if allowed, or multiple updates)
-                // For simplicity and safety, we'll do them in a loop if there aren't too many, 
-                // but better to use a single .upsert() if the table has an ID primary key.
+                // 3. Perform bulk update
                 const { error: updateError } = await supabase.from('harvests').upsert(updates);
                 if (updateError) throw updateError;
+                console.log(`Synced ${harvests.length} harvests for collector ${collector_id}`);
             }
         } catch (err) {
             console.error('Sync Error:', err);
