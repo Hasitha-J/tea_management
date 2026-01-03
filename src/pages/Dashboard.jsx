@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, BadgeDollarSign, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, BadgeDollarSign, Loader2, AlertCircle } from 'lucide-react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import { useLanguage } from '../LanguageContext';
 import { supabase } from '../supabaseClient';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
     const { t } = useLanguage();
@@ -66,9 +67,24 @@ const Dashboard = () => {
                 };
             });
 
-            const totalIncome = dashboardData.reduce((acc, curr) => acc + curr.total_income, 0);
-            const totalExpense = dashboardData.reduce((acc, curr) => acc + curr.total_expense, 0);
-            const totalProfit = totalIncome - totalExpense;
+            // Check for missing rates in the previous month for notification
+            const prevMonthDate = new Date();
+            prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+            const prevMonth = prevMonthDate.getMonth() + 1;
+            const prevYear = prevMonthDate.getFullYear();
+
+            const collectorsWithHarvests = Array.from(new Set(
+                harvestsRes.data
+                    .filter(h => {
+                        const d = new Date(h.date);
+                        return d.getMonth() + 1 === prevMonth && d.getFullYear() === prevYear && h.crop_type === 'tea';
+                    })
+                    .map(h => h.collector_id)
+            ));
+
+            const missingPrevRates = collectorsWithHarvests.some(cid =>
+                !rates.find(r => r.collector_id === cid && r.month === prevMonth && r.year === prevYear)
+            );
 
             setData({
                 fields: dashboardData,
@@ -76,7 +92,8 @@ const Dashboard = () => {
                     total_income: totalIncome,
                     total_expense: totalExpense,
                     total_profit: totalProfit
-                }
+                },
+                missingRates: missingPrevRates
             });
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
@@ -117,6 +134,24 @@ const Dashboard = () => {
                     <p className="text-sm md:text-base text-gray-500 mt-1">Estate-wide performance summary.</p>
                 </div>
             </div>
+
+            {data.missingRates && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="flex items-center gap-3 text-amber-800">
+                        <AlertCircle className="shrink-0" size={24} />
+                        <div>
+                            <p className="font-bold text-sm md:text-base">{t('previousMonthRatesMissing')}</p>
+                            <p className="text-xs md:text-sm opacity-90">{t('missingRatesNotice')}</p>
+                        </div>
+                    </div>
+                    <Link
+                        to="/collectors"
+                        className="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs md:text-sm font-bold shadow-sm hover:bg-amber-700 whitespace-nowrap"
+                    >
+                        {t('setRatesNow')}
+                    </Link>
+                </div>
+            )}
 
             {/* Global Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

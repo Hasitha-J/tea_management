@@ -8,6 +8,10 @@ import {
     TrendingUp,
     TrendingDown,
     BarChart3,
+    AlertCircle,
+    X,
+    Save,
+    Check
 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { supabase } from '../supabaseClient';
@@ -35,6 +39,8 @@ const Reports = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [reportData, setReportData] = useState(null);
+    const [quickRateInput, setQuickRateInput] = useState({}); // { key: rate }
+    const [showMissingModal, setShowMissingModal] = useState(false);
 
     // -------------------------------------------------
     // Initialize default date range on mount
@@ -201,6 +207,25 @@ const Reports = () => {
                 }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // Identify missing rates for the selected period
+            const missingRatesMap = new Map();
+            harvestsRes.data.forEach(h => {
+                if (h.crop_type === 'tea' && (!h.rate || h.rate === 0)) {
+                    const hDate = new Date(h.date);
+                    const month = hDate.getMonth() + 1;
+                    const year = hDate.getFullYear();
+                    const key = `${h.collector_id}-${month}-${year}`;
+                    if (!rates.find(r => r.collector_id === h.collector_id && r.month === month && r.year === year)) {
+                        missingRatesMap.set(key, {
+                            collector_id: h.collector_id,
+                            collector_name: collectors.find(c => c.id === h.collector_id)?.name || '?',
+                            month,
+                            year
+                        });
+                    }
+                }
+            });
+
             setReportData({
                 fieldStats,
                 totalIncome: fieldStats.reduce((s, f) => s + f.income, 0),
@@ -209,7 +234,8 @@ const Reports = () => {
                 expenseTypes,
                 collectorSummary,
                 transactions: combinedLogs,
-                harvestsCount: harvests.length
+                harvestsCount: harvests.length,
+                missingRates: Array.from(missingRatesMap.values())
             });
         } catch (error) {
             console.error('Report Fetch Error:', error);
@@ -221,6 +247,31 @@ const Reports = () => {
     useEffect(() => {
         fetchReportData();
     }, [startDate, endDate]);
+
+    const handleSaveQuickRates = async () => {
+        try {
+            const updates = Object.entries(quickRateInput).map(([key, rate]) => {
+                const [cid, month, year] = key.split('-');
+                return {
+                    collector_id: parseInt(cid),
+                    month: parseInt(month),
+                    year: parseInt(year),
+                    rate: parseFloat(rate)
+                };
+            });
+
+            if (updates.length > 0) {
+                const { error } = await supabase.from('collector_rates').upsert(updates);
+                if (error) throw error;
+                setQuickRateInput({});
+                setShowMissingModal(false);
+                fetchReportData(); // Refresh
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error saving rates");
+        }
+    };
 
     // -------------------------------------------------
     // PDF generation (Stable Version)
@@ -400,6 +451,24 @@ const Reports = () => {
                 </div>
             ) : reportData ? (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                    {reportData.missingRates && reportData.missingRates.length > 0 && (
+                        <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 text-red-800">
+                                <AlertCircle className="shrink-0" />
+                                <div>
+                                    <p className="font-bold text-xs md:text-sm">{t('pendingRatesWarning')}</p>
+                                    <p className="text-[10px] md:text-xs opacity-80">{reportData.missingRates.length} rates need to be set.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowMissingModal(true)}
+                                className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 whitespace-nowrap"
+                            >
+                                {t('setRatesNow')}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Performance Summary Card */}
                     <div className="bg-emerald-600 p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
                         <TrendingUp size={100} className="absolute -right-4 -bottom-4 opacity-10" />
@@ -447,6 +516,64 @@ const Reports = () => {
             ) : (startDate && endDate) && (
                 <div className="py-20 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                     <p className="text-gray-400 text-sm">No data found for this period.</p>
+                </div>
+            )}
+
+            {/* Missing Rates Modal */}
+            {showMissingModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">{t('setMissingRates')}</h3>
+                                <p className="text-xs text-gray-500">{t('addRatesInfo')}</p>
+                            </div>
+                            <button onClick={() => setShowMissingModal(false)} className="p-2 hover:bg-white rounded-full transition-colors text-gray-400">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
+                            {reportData?.missingRates.map((mr) => {
+                                const key = `${mr.collector_id}-${mr.month}-${mr.year}`;
+                                return (
+                                    <div key={key} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div className="flex-1">
+                                            <p className="font-bold text-sm text-gray-800">{mr.collector_name}</p>
+                                            <p className="text-[10px] text-gray-400 uppercase font-black">{new Date(0, mr.month - 1).toLocaleString('default', { month: 'long' })} {mr.year}</p>
+                                        </div>
+                                        <div className="relative w-28">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">Rs.</span>
+                                            <input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={quickRateInput[key] || ''}
+                                                onChange={(e) => setQuickRateInput({ ...quickRateInput, [key]: e.target.value })}
+                                                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="p-6 bg-gray-50/50 border-t border-gray-100 flex gap-3">
+                            <button
+                                onClick={() => setShowMissingModal(false)}
+                                className="flex-1 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveQuickRates}
+                                disabled={Object.keys(quickRateInput).length === 0}
+                                className="flex-[2] py-3 bg-emerald-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200 disabled:opacity-50 disabled:shadow-none transition-all"
+                            >
+                                <Save size={18} />
+                                Save & Update Report
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
