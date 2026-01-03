@@ -22,6 +22,8 @@ function App() {
             <Route path="history" element={<History />} />
             <Route path="settings" element={<Settings />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="log" element={<LogPortal />} />
+            <Route path="more" element={<MoreMenu />} />
           </Route>
         </Routes>
       </HashRouter>
