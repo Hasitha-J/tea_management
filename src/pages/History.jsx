@@ -12,6 +12,8 @@ const History = () => {
     const [editForm, setEditForm] = useState({});
     const [deleteConfirmId, setDeleteConfirmId] = useState(null);
     const [status, setStatus] = useState({ type: '', message: '' });
+    const [fields, setFields] = useState([]);
+    const [selectedField, setSelectedField] = useState('all');
 
     useEffect(() => {
         fetchData();
@@ -19,16 +21,24 @@ const History = () => {
 
     const fetchData = async () => {
         try {
-            const [transRes, harvRes, ratesRes] = await Promise.all([
-                supabase.from('transactions').select('*, fields(name)').order('date', { ascending: false }),
-                supabase.from('harvests').select('*, fields(name), tea_collectors(name)').order('date', { ascending: false }),
-                supabase.from('collector_rates').select('*')
+            // Default to last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const dateLimit = thirtyDaysAgo.toISOString().split('T')[0];
+
+            const [transRes, harvRes, ratesRes, fieldsRes] = await Promise.all([
+                supabase.from('transactions').select('*, fields(name)').gte('date', dateLimit).order('date', { ascending: false }),
+                supabase.from('harvests').select('*, fields(name), tea_collectors(name)').gte('date', dateLimit).order('date', { ascending: false }),
+                supabase.from('collector_rates').select('*'),
+                supabase.from('fields').select('id, name')
             ]);
 
             if (transRes.error) throw transRes.error;
             if (harvRes.error) throw harvRes.error;
             if (ratesRes.error) throw ratesRes.error;
+            if (fieldsRes.error) throw fieldsRes.error;
 
+            setFields(fieldsRes.data || []);
             const rates = ratesRes.data || [];
 
             const flattenedTrans = transRes.data.map(t => ({
@@ -67,8 +77,16 @@ const History = () => {
         }
     };
 
-    const totalIncome = harvests.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
-    const totalExpense = transactions.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+    const filteredTransactions = selectedField === 'all'
+        ? transactions
+        : transactions.filter(t => t.field_id === parseInt(selectedField));
+
+    const filteredHarvests = selectedField === 'all'
+        ? harvests
+        : harvests.filter(h => h.field_id === parseInt(selectedField));
+
+    const totalIncome = filteredHarvests.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+    const totalExpense = filteredTransactions.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
 
     // --- Actions ---
 
@@ -161,26 +179,41 @@ const History = () => {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200 mb-6">
-                    <button
-                        className={`px-6 py-3 font-medium text-sm transition-colors relative
-                            ${activeTab === 'income' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
-                        `}
-                        disabled={editingId !== null || deleteConfirmId !== null}
-                        onClick={() => { setActiveTab('income'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
-                    >
-                        {t('recentIncome')}
-                    </button>
-                    <button
-                        className={`px-6 py-3 font-medium text-sm transition-colors relative
-                            ${activeTab === 'expenses' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
-                        `}
-                        disabled={editingId !== null || deleteConfirmId !== null}
-                        onClick={() => { setActiveTab('expenses'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
-                    >
-                        {t('recentExpenses')}
-                    </button>
+                {/* Tabs & Filter */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 mb-6">
+                    <div className="flex">
+                        <button
+                            className={`px-6 py-3 font-medium text-sm transition-colors relative
+                                ${activeTab === 'income' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
+                            `}
+                            disabled={editingId !== null || deleteConfirmId !== null}
+                            onClick={() => { setActiveTab('income'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
+                        >
+                            {t('recentIncome')}
+                        </button>
+                        <button
+                            className={`px-6 py-3 font-medium text-sm transition-colors relative
+                                ${activeTab === 'expenses' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'}
+                            `}
+                            disabled={editingId !== null || deleteConfirmId !== null}
+                            onClick={() => { setActiveTab('expenses'); setStatus({ type: '', message: '' }); setExpandedId(null); }}
+                        >
+                            {t('recentExpenses')}
+                        </button>
+                    </div>
+
+                    <div className="pb-3 md:pb-0 px-1">
+                        <select
+                            value={selectedField}
+                            onChange={(e) => setSelectedField(e.target.value)}
+                            className="text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        >
+                            <option value="all">{t('allFields')}</option>
+                            {fields.map(f => (
+                                <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {status.message && (
@@ -203,7 +236,7 @@ const History = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {(activeTab === 'expenses' ? transactions : harvests).map((item) => (
+                            {(activeTab === 'expenses' ? filteredTransactions : filteredHarvests).map((item) => (
                                 <React.Fragment key={item.id}>
                                     <tr
                                         onClick={() => toggleRow(item.id)}
@@ -316,7 +349,7 @@ const History = () => {
                                     )}
                                 </React.Fragment>
                             ))}
-                            {(activeTab === 'expenses' ? transactions : harvests).length === 0 && (
+                            {(activeTab === 'expenses' ? filteredTransactions : filteredHarvests).length === 0 && (
                                 <tr>
                                     <td colSpan="3" className="px-6 py-12 text-center text-gray-400">
                                         {t('noData')}

@@ -112,6 +112,7 @@ export const translations = {
         previousMonthRatesMissing: "Rates for some collectors from the previous month are not set yet.",
         setMissingRates: "Set Missing Rates",
         addRatesInfo: "Add rates for the selected report period.",
+        allFields: "All Fields",
         pendingRate: "Rate Pending",
         selectCollector: "Select Collector...",
     },
@@ -228,6 +229,7 @@ export const translations = {
         previousMonthRatesMissing: "පසුගිය මාසයේ සමහර එකතු කරන්නන්ගේ මිල ගණන් තවමත් ඇතුළත් කර නැත.",
         setMissingRates: "මිල ගණන් ඇතුළත් කරන්න",
         addRatesInfo: "තෝරාගත් කාල සීමාව සඳහා මිල ගණන් එක් කරන්න.",
+        allFields: "සියලුම වතු",
         pendingRate: "මිල තීරණය කර නොමැත",
         selectCollector: "එකතු කරන්නා තෝරන්න...",
     }
