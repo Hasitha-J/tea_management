@@ -72,8 +72,17 @@ const ExpenseForm = () => {
         setFormData(prev => {
             const newData = { ...prev, [name]: value };
 
+            // Reset category if type changes
+            if (name === 'type') {
+                newData.category_id = '';
+                newData.description = '';
+                newData.rate = '';
+                newData.quantity = '1';
+                newData.hours_worked = '';
+            }
+
             // Auto-populate rate if category changes
-            if (name === 'category_id') {
+            if (name === 'category_id' && value) {
                 if (prev.type === 'labor_cost' || prev.type === 'owner_labor') {
                     const act = activities.find(a => a.id === parseInt(value));
                     if (act) newData.rate = act.default_rate;
@@ -96,13 +105,32 @@ const ExpenseForm = () => {
         e.preventDefault();
         setStatus({ type: '', message: '' });
 
-        if (!formData.field_id || !formData.rate) {
-            setStatus({ type: 'error', message: 'Please fill all required fields.' });
+        // Enhanced Validation
+        if (!formData.field_id) {
+            setStatus({ type: 'error', message: 'Please select a field.' });
             return;
         }
 
+        if ((formData.type === 'labor_cost' || formData.type === 'goods_cost' || formData.type === 'owner_labor') && !formData.category_id) {
+            setStatus({ type: 'error', message: 'Please select an activity/item.' });
+            return;
+        }
+
+        if (!formData.rate || parseFloat(formData.rate) <= 0) {
+            setStatus({ type: 'error', message: 'Please enter a valid rate/amount.' });
+            return;
+        }
+
+        // Sanitize Payload for Supabase (Ensure numbers are numbers, empty strings are null)
         const payload = {
-            ...formData,
+            date: formData.date,
+            field_id: parseInt(formData.field_id),
+            type: formData.type,
+            category_id: formData.category_id ? parseInt(formData.category_id) : null,
+            description: formData.description || null,
+            quantity: parseFloat(formData.quantity) || 1,
+            hours_worked: formData.hours_worked ? parseFloat(formData.hours_worked) : null,
+            rate: parseFloat(formData.rate),
             total_amount: calculateTotal()
         };
 
@@ -111,19 +139,23 @@ const ExpenseForm = () => {
             if (error) throw error;
 
             setStatus({ type: 'success', message: t('saveSuccess') });
-            // Reset sensitive fields
+
+            // Reset form but keep date and field for convenience
             setFormData(prev => ({
                 ...prev,
                 category_id: '',
                 description: '',
-                quantity: '1', // Reset to 1
+                quantity: '1',
                 hours_worked: '',
                 rate: ''
             }));
             fetchTransactions();
         } catch (error) {
-            console.error(error);
-            setStatus({ type: 'error', message: t('error') });
+            console.error('Submission Error:', error);
+            setStatus({
+                type: 'error',
+                message: error.message || t('error')
+            });
         }
     };
 
@@ -240,7 +272,7 @@ const ExpenseForm = () => {
     };
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6 md:space-y-8 pb-10">
+        <div className="max-w-3xl mx-auto space-y-6 md:space-y-8 pb-32">
             <div className="mb-4 md:mb-8">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
                     <HandCoins className="text-emerald-600" />
