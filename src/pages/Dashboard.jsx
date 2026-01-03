@@ -86,6 +86,10 @@ const Dashboard = () => {
                 !rates.find(r => r.collector_id === cid && r.month === prevMonth && r.year === prevYear)
             );
 
+            const totalIncome = dashboardData.reduce((acc, curr) => acc + curr.total_income, 0);
+            const totalExpense = dashboardData.reduce((acc, curr) => acc + curr.total_expense, 0);
+            const totalProfit = totalIncome - totalExpense;
+
             setData({
                 fields: dashboardData,
                 summary: {
