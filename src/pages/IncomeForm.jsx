@@ -14,6 +14,7 @@ const IncomeForm = () => {
         weight: '',
         rate: '',
         collector_id: '',
+        advance_amount: '',
     });
     const [status, setStatus] = useState({ type: '', message: '' });
 
@@ -56,11 +57,24 @@ const IncomeForm = () => {
         };
 
         try {
-            const { error } = await supabase.from('harvests').insert([payload]);
-            if (error) throw error;
+            // 1. Insert harvest record
+            const { error: harvestError } = await supabase.from('harvests').insert([payload]);
+            if (harvestError) throw harvestError;
+
+            // 2. If tea and advance provided, insert advance record
+            if (isTea && formData.advance_amount && parseFloat(formData.advance_amount) > 0) {
+                const advancePayload = {
+                    collector_id: parseInt(formData.collector_id),
+                    date: formData.date,
+                    amount: parseFloat(formData.advance_amount),
+                    description: `Advance during ${formData.crop_type} harvest`
+                };
+                const { error: advanceError } = await supabase.from('collector_advances').insert([advancePayload]);
+                if (advanceError) throw advanceError;
+            }
 
             setStatus({ type: 'success', message: t('saveSuccess') });
-            setFormData({ ...formData, weight: '', rate: '' }); // Reset data fields
+            setFormData({ ...formData, weight: '', rate: '', advance_amount: '' }); // Reset data fields
         } catch (error) {
             console.error(error);
             setStatus({ type: 'error', message: t('error') });
@@ -139,19 +153,33 @@ const IncomeForm = () => {
                     </div>
 
                     {formData.crop_type === 'tea' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('collector')}</label>
-                            <select
-                                name="collector_id"
-                                value={formData.collector_id}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                            >
-                                <option value="">{t('selectCollector')}</option>
-                                {collectors.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('collector')}</label>
+                                <select
+                                    name="collector_id"
+                                    value={formData.collector_id}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                >
+                                    <option value="">{t('selectCollector')}</option>
+                                    {collectors.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('advanceAmount')}</label>
+                                <input
+                                    type="number"
+                                    name="advance_amount"
+                                    value={formData.advance_amount}
+                                    onChange={handleChange}
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    className="w-full px-4 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                />
+                            </div>
                         </div>
                     )}
 
