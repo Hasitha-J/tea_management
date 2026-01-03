@@ -7,6 +7,8 @@ import ExpenseForm from './pages/ExpenseForm';
 import Settings from './pages/Settings';
 import History from './pages/History';
 import Reports from './pages/Reports';
+import LogPortal from './pages/LogPortal';
+import MoreMenu from './pages/MoreMenu';
 
 import { LanguageProvider } from './LanguageContext';
 
