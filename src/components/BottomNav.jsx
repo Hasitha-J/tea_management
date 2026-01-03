@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Sprout, HandCoins, Settings, History } from 'lucide-react';
+import { LayoutDashboard, Sprout, HandCoins, Settings, History, FileText } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 const BottomNav = () => {
@@ -11,6 +11,7 @@ const BottomNav = () => {
         { to: '/income', label: t('logIncome'), icon: <Sprout size={20} /> },
         { to: '/expenses', label: t('logExpenses'), icon: <HandCoins size={20} /> },
         { to: '/history', label: t('history'), icon: <History size={20} /> },
+        { to: '/reports', label: t('reports'), icon: <FileText size={20} /> },
         { to: '/settings', label: t('compSettings'), icon: <Settings size={20} /> },
     ];
 

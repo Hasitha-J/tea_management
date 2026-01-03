@@ -6,6 +6,7 @@ import IncomeForm from './pages/IncomeForm';
 import ExpenseForm from './pages/ExpenseForm';
 import Settings from './pages/Settings';
 import History from './pages/History';
+import Reports from './pages/Reports';
 
 import { LanguageProvider } from './LanguageContext';
 
@@ -20,6 +21,7 @@ function App() {
             <Route path="expenses" element={<ExpenseForm />} />
             <Route path="history" element={<History />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="reports" element={<Reports />} />
           </Route>
         </Routes>
       </HashRouter>
