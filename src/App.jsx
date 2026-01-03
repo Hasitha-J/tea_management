@@ -9,6 +9,7 @@ import History from './pages/History';
 import Reports from './pages/Reports';
 import LogPortal from './pages/LogPortal';
 import MoreMenu from './pages/MoreMenu';
+import Collectors from './pages/Collectors';
 
 import { LanguageProvider } from './LanguageContext';
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="log" element={<LogPortal />} />
             <Route path="more" element={<MoreMenu />} />
+            <Route path="collectors" element={<Collectors />} />
           </Route>
         </Routes>
       </HashRouter>

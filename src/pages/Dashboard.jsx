@@ -16,18 +16,36 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const [harvestsRes, transactionsRes, fieldsRes] = await Promise.all([
-                supabase.from('harvests').select('field_id, total_amount'),
-                supabase.from('transactions').select('field_id, total_amount'),
-                supabase.from('fields').select('*')
+            const [fieldsRes, harvestsRes, transactionsRes, ratesRes] = await Promise.all([
+                supabase.from('fields').select('*'),
+                supabase.from('harvests').select('*'),
+                supabase.from('transactions').select('*'),
+                supabase.from('collector_rates').select('*')
             ]);
 
             if (harvestsRes.error) throw harvestsRes.error;
             if (transactionsRes.error) throw transactionsRes.error;
             if (fieldsRes.error) throw fieldsRes.error;
+            if (ratesRes.error) throw ratesRes.error;
 
             const fields = fieldsRes.data;
-            const harvests = harvestsRes.data;
+            const rates = ratesRes.data || [];
+
+            // Process harvests to fill in missing rates for tea
+            const harvests = (harvestsRes.data || []).map(h => {
+                let amount = h.total_amount || 0;
+                if (h.crop_type === 'tea' && (!h.rate || h.rate === 0)) {
+                    const hDate = new Date(h.date);
+                    const month = hDate.getMonth() + 1;
+                    const year = hDate.getFullYear();
+                    const monthlyRate = rates.find(r => r.collector_id === h.collector_id && r.month === month && r.year === year);
+                    if (monthlyRate) {
+                        amount = (h.weight || 0) * monthlyRate.rate;
+                    }
+                }
+                return { ...h, total_amount: amount };
+            });
+
             const transactions = transactionsRes.data;
 
             const dashboardData = fields.map(field => {

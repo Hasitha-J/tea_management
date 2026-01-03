@@ -6,23 +6,27 @@ import { supabase } from '../supabaseClient';
 const IncomeForm = () => {
     const { t } = useLanguage();
     const [fields, setFields] = useState([]);
+    const [collectors, setCollectors] = useState([]);
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0],
         field_id: '',
         crop_type: 'tea',
         weight: '',
         rate: '',
+        collector_id: '',
     });
     const [status, setStatus] = useState({ type: '', message: '' });
 
     useEffect(() => {
-        // Fetch fields
-        supabase.from('fields').select('*')
-            .then(res => {
-                if (res.error) throw res.error;
-                setFields(res.data);
-            })
-            .catch(err => console.error(err));
+        // Fetch fields and collectors
+        Promise.all([
+            supabase.from('fields').select('*'),
+            supabase.from('tea_collectors').select('*')
+        ]).then(([fRes, cRes]) => {
+            if (fRes.error) throw fRes.error;
+            setFields(fRes.data);
+            if (cRes.data) setCollectors(cRes.data);
+        }).catch(err => console.error(err));
     }, []);
 
     const handleChange = (e) => {
@@ -33,14 +37,22 @@ const IncomeForm = () => {
         e.preventDefault();
         setStatus({ type: '', message: '' });
 
-        if (!formData.field_id || !formData.weight || !formData.rate) {
+        const isTea = formData.crop_type === 'tea';
+        if (!formData.field_id || !formData.weight || (!isTea && !formData.rate) || (isTea && !formData.collector_id)) {
             setStatus({ type: 'error', message: 'Please fill all required fields.' });
             return;
         }
 
         const payload = {
-            ...formData,
-            total_amount: parseFloat(formData.weight) * parseFloat(formData.rate)
+            date: formData.date,
+            field_id: parseInt(formData.field_id),
+            crop_type: formData.crop_type,
+            weight: parseFloat(formData.weight) || 0,
+            rate: parseFloat(formData.rate) || null,
+            collector_id: isTea ? parseInt(formData.collector_id) : null,
+            total_amount: (parseFloat(formData.weight) && parseFloat(formData.rate))
+                ? parseFloat(formData.weight) * parseFloat(formData.rate)
+                : 0
         };
 
         try {
@@ -126,9 +138,26 @@ const IncomeForm = () => {
                         </div>
                     </div>
 
+                    {formData.crop_type === 'tea' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('collector')}</label>
+                            <select
+                                name="collector_id"
+                                value={formData.collector_id}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                            >
+                                <option value="">{t('selectCollector')}</option>
+                                {collectors.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('weight')}</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('weight')} (kg)</label>
                             <input
                                 type="number"
                                 name="weight"
@@ -141,13 +170,13 @@ const IncomeForm = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('rate')} (Rs/kg)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('rate')} (Rs/kg) {formData.crop_type === 'tea' && `(${t('optional') || 'Optional'})`}</label>
                             <input
                                 type="number"
                                 name="rate"
                                 value={formData.rate}
                                 onChange={handleChange}
-                                placeholder="0.00"
+                                placeholder={formData.crop_type === 'tea' ? t('pendingRate') : "0.00"}
                                 step="0.01"
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                             />

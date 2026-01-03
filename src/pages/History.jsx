@@ -21,7 +21,7 @@ const History = () => {
         try {
             const [transRes, harvRes] = await Promise.all([
                 supabase.from('transactions').select('*, fields(name)').order('date', { ascending: false }),
-                supabase.from('harvests').select('*, fields(name)').order('date', { ascending: false })
+                supabase.from('harvests').select('*, fields(name), tea_collectors(name)').order('date', { ascending: false })
             ]);
 
             if (transRes.error) throw transRes.error;
@@ -34,7 +34,8 @@ const History = () => {
 
             const flattenedHarv = harvRes.data.map(h => ({
                 ...h,
-                field_name: h.fields?.name
+                field_name: h.fields?.name,
+                collector_name: h.tea_collectors?.name
             }));
 
             setTransactions(flattenedTrans);
@@ -208,28 +209,41 @@ const History = () => {
                                                             {editingId === item.id ? (
                                                                 <input
                                                                     type="text"
-                                                                    className="w-full border rounded px-2 py-1"
+                                                                    className="w-full border rounded px-2 py-1 text-sm"
                                                                     value={activeTab === 'income' ? editForm.crop_type : editForm.type}
                                                                     onChange={e => setEditForm({ ...editForm, [activeTab === 'income' ? 'crop_type' : 'type']: e.target.value })}
                                                                 />
                                                             ) : (
                                                                 <p className="text-sm font-medium text-gray-700 capitalize">
                                                                     {activeTab === 'income' ? (t(item.crop_type) || item.crop_type) : item.type?.replace('_', ' ')}
+                                                                    {item.collector_name && <span className="text-xs text-emerald-600 ml-2">({item.collector_name})</span>}
                                                                 </p>
                                                             )}
                                                         </div>
                                                         <div>
                                                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">{t('details')}</p>
                                                             {editingId === item.id ? (
-                                                                <input
-                                                                    type="text"
-                                                                    className="w-full border rounded px-2 py-1"
-                                                                    value={activeTab === 'income' ? `${editForm.weight} kg @ ${editForm.rate}` : editForm.description}
-                                                                    onChange={e => setEditForm({ ...editForm, [activeTab === 'income' ? 'description' : 'description']: e.target.value })}
-                                                                />
+                                                                <div className="flex gap-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        className="w-1/2 border rounded px-2 py-1 text-sm"
+                                                                        placeholder="Weight"
+                                                                        value={editForm.weight}
+                                                                        onChange={e => setEditForm({ ...editForm, weight: e.target.value })}
+                                                                    />
+                                                                    <input
+                                                                        type="number"
+                                                                        className="w-1/2 border rounded px-2 py-1 text-sm"
+                                                                        placeholder="Rate"
+                                                                        value={editForm.rate}
+                                                                        onChange={e => setEditForm({ ...editForm, rate: e.target.value })}
+                                                                    />
+                                                                </div>
                                                             ) : (
                                                                 <p className="text-sm text-gray-600">
-                                                                    {activeTab === 'income' ? `${item.weight} kg @ Rs. ${item.rate}` : (item.description || '-')}
+                                                                    {activeTab === 'income' ? (
+                                                                        item.rate ? `${item.weight} kg @ Rs. ${item.rate}` : `${item.weight} kg (${t('pendingRate')})`
+                                                                    ) : (item.description || '-')}
                                                                 </p>
                                                             )}
                                                         </div>

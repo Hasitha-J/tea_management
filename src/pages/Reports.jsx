@@ -77,19 +77,59 @@ const Reports = () => {
         if (!startDate || !endDate) return;
         setLoading(true);
         try {
-            const [fieldsRes, harvestsRes, transactionsRes] = await Promise.all([
+            const [fieldsRes, harvestsRes, transactionsRes, ratesRes, advancesRes, collectorsRes] = await Promise.all([
                 supabase.from('fields').select('*'),
                 supabase.from('harvests').select('*').gte('date', startDate).lte('date', endDate),
-                supabase.from('transactions').select('*').gte('date', startDate).lte('date', endDate)
+                supabase.from('transactions').select('*').gte('date', startDate).lte('date', endDate),
+                supabase.from('collector_rates').select('*'),
+                supabase.from('collector_advances').select('*').gte('date', startDate).lte('date', endDate),
+                supabase.from('tea_collectors').select('*')
             ]);
 
             if (fieldsRes.error) throw fieldsRes.error;
             if (harvestsRes.error) throw harvestsRes.error;
             if (transactionsRes.error) throw transactionsRes.error;
+            if (ratesRes.error) throw ratesRes.error;
+            if (advancesRes.error) throw advancesRes.error;
+            if (collectorsRes.error) throw collectorsRes.error;
 
             const fields = fieldsRes.data;
-            const harvests = harvestsRes.data;
             const transactions = transactionsRes.data;
+            const rates = ratesRes.data || [];
+            const advances = advancesRes.data || [];
+            const collectors = collectorsRes.data || [];
+
+            // Process harvests to fill in missing rates for tea
+            const harvests = (harvestsRes.data || []).map(h => {
+                let amount = h.total_amount || 0;
+                let rateValue = h.rate;
+
+                if (h.crop_type === 'tea' && (!h.rate || h.rate === 0)) {
+                    const hDate = new Date(h.date);
+                    const month = hDate.getMonth() + 1;
+                    const year = hDate.getFullYear();
+                    const monthlyRate = rates.find(r => r.collector_id === h.collector_id && r.month === month && r.year === year);
+                    if (monthlyRate) {
+                        rateValue = monthlyRate.rate;
+                        amount = (h.weight || 0) * monthlyRate.rate;
+                    }
+                }
+                return { ...h, rate: rateValue, total_amount: amount };
+            });
+
+            // Collector Summary
+            const collectorSummary = collectors.map(c => {
+                const totalWeight = harvests.filter(h => h.collector_id === c.id).reduce((s, h) => s + (h.weight || 0), 0);
+                const totalRevenue = harvests.filter(h => h.collector_id === c.id).reduce((s, h) => s + (h.total_amount || 0), 0);
+                const totalAdvances = advances.filter(a => a.collector_id === c.id).reduce((s, a) => s + (a.amount || 0), 0);
+                return {
+                    name: c.name,
+                    weight: totalWeight,
+                    revenue: totalRevenue,
+                    advances: totalAdvances,
+                    balance: totalRevenue - totalAdvances
+                };
+            }).filter(cs => cs.weight > 0 || cs.advances > 0);
 
             // Aggregates per field
             const fieldStats = fields.map(field => {
@@ -142,7 +182,7 @@ const Reports = () => {
                     date: h.date,
                     type: 'Income',
                     field: fields.find(f => f.id === h.field_id)?.name || '-',
-                    details: h.crop_type,
+                    details: h.crop_type === 'tea' ? `${h.crop_type} (${collectors.find(c => c.id === h.collector_id)?.name || '?'})` : h.crop_type,
                     amount: h.total_amount
                 })),
                 ...transactions.map(t => ({
@@ -151,6 +191,13 @@ const Reports = () => {
                     field: fields.find(f => f.id === t.field_id)?.name || '-',
                     details: t.description || t.type,
                     amount: t.total_amount
+                })),
+                ...advances.map(a => ({
+                    date: a.date,
+                    type: 'Advance',
+                    field: '-',
+                    details: `Advance: ${collectors.find(c => c.id === a.collector_id)?.name || '?'}`,
+                    amount: a.amount
                 }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -160,6 +207,7 @@ const Reports = () => {
                 totalExpense: fieldStats.reduce((s, f) => s + f.expense, 0),
                 crops,
                 expenseTypes,
+                collectorSummary,
                 transactions: combinedLogs,
                 harvestsCount: harvests.length
             });
@@ -242,7 +290,23 @@ const Reports = () => {
                 headStyles: { fillColor: [59, 130, 246] }
             });
 
-            // 4. Detailed Transaction Log
+            // 4. Collector Summary Table (New)
+            if (reportData.collectorSummary && reportData.collectorSummary.length > 0) {
+                doc.setFontSize(14);
+                doc.text("Collector Summary & Advances", 14, doc.lastAutoTable.finalY + 12);
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 16,
+                    head: [['Collector', 'Weight', 'Revenue', 'Advances', 'Balance']],
+                    body: reportData.collectorSummary.map(cs => [
+                        safeText(cs.name),
+                        `${cs.weight.toFixed(2)} kg`,
+                        `Rs. ${cs.revenue.toLocaleString()}`,
+                        `Rs. ${cs.advances.toLocaleString()}`,
+                        `Rs. ${cs.balance.toLocaleString()}`
+                    ]),
+                    headStyles: { fillColor: [245, 158, 11] } // Orange theme
+                });
+            }
             doc.addPage();
             doc.setFontSize(16);
             doc.text("Detailed Transaction Log", 14, 20);

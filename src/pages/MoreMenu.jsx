@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FileText, Settings, ChevronRight, Share2, Info } from 'lucide-react';
+import { Settings, FileBarChart, Languages, HelpCircle, Users, ChevronRight, Share2, Info } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 const MoreMenu = () => {
@@ -11,8 +11,15 @@ const MoreMenu = () => {
             to: '/reports',
             title: t('reports'),
             desc: 'Generate & export PDF reports',
-            icon: <FileText size={24} className="text-blue-500" />,
+            icon: <FileBarChart size={24} className="text-blue-500" />,
             bg: 'bg-blue-50'
+        },
+        {
+            to: '/collectors',
+            title: t('collectors'),
+            desc: 'Tea collectors & monthly rates',
+            icon: <Users size={24} className="text-emerald-500" />,
+            bg: 'bg-emerald-50'
         },
         {
             to: '/settings',
