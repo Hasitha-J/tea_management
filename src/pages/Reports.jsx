@@ -263,6 +263,30 @@ const Reports = () => {
             if (updates.length > 0) {
                 const { error } = await supabase.from('collector_rates').upsert(updates);
                 if (error) throw error;
+
+                // Sync Harvest Records for each updated rate
+                for (const up of updates) {
+                    const startDate = `${up.year}-${String(up.month).padStart(2, '0')}-01`;
+                    const endDate = new Date(up.year, up.month, 0).toISOString().split('T')[0];
+
+                    const { data: harvests } = await supabase
+                        .from('harvests')
+                        .select('id, weight')
+                        .eq('collector_id', up.collector_id)
+                        .eq('crop_type', 'tea')
+                        .gte('date', startDate)
+                        .lte('date', endDate);
+
+                    if (harvests && harvests.length > 0) {
+                        const harvestUpdates = harvests.map(h => ({
+                            id: h.id,
+                            rate: up.rate,
+                            total_amount: (h.weight || 0) * up.rate
+                        }));
+                        await supabase.from('harvests').upsert(harvestUpdates);
+                    }
+                }
+
                 setQuickRateInput({});
                 setShowMissingModal(false);
                 fetchReportData(); // Refresh

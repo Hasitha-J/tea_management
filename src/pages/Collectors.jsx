@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Save, Trash2, Calendar, Banknote, History, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Users, Plus, Save, Trash2, Calendar, Banknote, History, AlertCircle, CheckCircle2, Edit2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { supabase } from '../supabaseClient';
 
@@ -45,12 +45,53 @@ const Collectors = () => {
         }
     };
 
+    const syncHarvestRates = async (collector_id, month, year, rate) => {
+        try {
+            // Calculate date range for the month
+            const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+            const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+            // 1. Fetch all tea harvests for this collector in this month
+            // We update harvests where rate is null OR where it's a tea crop (since tea rates are usually monthly)
+            const { data: harvests, error: fetchError } = await supabase
+                .from('harvests')
+                .select('id, weight')
+                .eq('collector_id', collector_id)
+                .eq('crop_type', 'tea')
+                .gte('date', startDate)
+                .lte('date', endDate);
+
+            if (fetchError) throw fetchError;
+
+            if (harvests && harvests.length > 0) {
+                // 2. Prepare updates
+                const updates = harvests.map(h => ({
+                    id: h.id,
+                    rate: parseFloat(rate),
+                    total_amount: (h.weight || 0) * parseFloat(rate)
+                }));
+
+                // 3. Perform bulk update (using upsert with IDs is a common way in Supabase if allowed, or multiple updates)
+                // For simplicity and safety, we'll do them in a loop if there aren't too many, 
+                // but better to use a single .upsert() if the table has an ID primary key.
+                const { error: updateError } = await supabase.from('harvests').upsert(updates);
+                if (updateError) throw updateError;
+            }
+        } catch (err) {
+            console.error('Sync Error:', err);
+        }
+    };
+
     const handleAddRate = async (e) => {
         e.preventDefault();
         try {
             const { error } = await supabase.from('collector_rates').upsert([newRate]);
             if (error) throw error;
-            setStatus({ type: 'success', message: t('saveSuccess') });
+
+            // Sync with history
+            await syncHarvestRates(newRate.collector_id, newRate.month, newRate.year, newRate.rate);
+
+            setStatus({ type: 'success', message: t('saveSuccess') + ' & History Updated' });
             setNewRate({ ...newRate, rate: '' });
             fetchData();
         } catch (err) {
@@ -191,9 +232,28 @@ const Collectors = () => {
 
                     <div className="mt-6 h-48 overflow-y-auto space-y-2 text-sm text-gray-600">
                         {rates.sort((a, b) => b.year - a.year || b.month - a.month).map(r => (
-                            <div key={r.id} className="flex items-center justify-between p-2 border-b border-gray-50">
-                                <span>{r.tea_collectors?.name} ({r.month}/{r.year})</span>
-                                <span className="font-bold">Rs. {r.rate}</span>
+                            <div key={r.id} className="flex items-center justify-between p-2 border-b border-gray-50 group">
+                                <div className="flex-1">
+                                    <span className="font-medium text-gray-800">{r.tea_collectors?.name}</span>
+                                    <span className="ml-2 text-xs text-gray-400">({r.month}/{r.year})</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-bold text-blue-600">Rs. {r.rate}</span>
+                                    <button
+                                        onClick={() => setNewRate({
+                                            collector_id: r.collector_id,
+                                            month: r.month,
+                                            year: r.year,
+                                            rate: r.rate
+                                        })}
+                                        className="text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    <button onClick={() => deleteItem('collector_rates', r.id)} className="text-red-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
