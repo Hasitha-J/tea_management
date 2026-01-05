@@ -160,12 +160,36 @@ const Reports = () => {
                     .filter(t => t.field_id === field.id)
                     .reduce((sum, t) => sum + (t.total_amount || 0), 0);
                 return {
+                    id: field.id,
                     name: field.name,
                     income,
                     expense,
                     profit: income - expense
                 };
             });
+
+            // Field-wise Crop Summary (New)
+            const fieldCropStats = fields.map(field => {
+                const fieldHarvests = harvests.filter(h => h.field_id === field.id);
+                const cropBreakdown = fieldHarvests.reduce((acc, h) => {
+                    const existing = acc.find(c => c.type === h.crop_type);
+                    if (existing) {
+                        existing.weight += (h.weight || 0);
+                        existing.revenue += (h.total_amount || 0);
+                    } else {
+                        acc.push({
+                            type: h.crop_type || 'Unknown',
+                            weight: h.weight || 0,
+                            revenue: h.total_amount || 0
+                        });
+                    }
+                    return acc;
+                }, []);
+                return {
+                    fieldName: field.name,
+                    crops: cropBreakdown
+                };
+            }).filter(f => f.crops.length > 0);
 
             // Crop performance
             const crops = harvests.reduce((arr, h) => {
@@ -195,7 +219,6 @@ const Reports = () => {
                     .reduce((sum, t) => sum + (t.total_amount || 0), 0);
                 return { ...type, amount };
             }).filter(e => e.amount > 0);
-
             // Combined activities for full log
             const combinedLogs = [
                 ...harvests.map(h => ({
@@ -221,6 +244,24 @@ const Reports = () => {
                 }))
             ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // Group Transactions by Field (New)
+            const fieldGroupedTransactions = fields.map(field => {
+                const fieldTrans = combinedLogs.filter(l => l.field === field.name);
+                return {
+                    fieldName: field.name,
+                    transactions: fieldTrans
+                };
+            }).filter(f => f.transactions.length > 0);
+
+            // Add a group for non-field transactions (e.g. advances)
+            const nonFieldTrans = combinedLogs.filter(l => l.field === '-');
+            if (nonFieldTrans.length > 0) {
+                fieldGroupedTransactions.push({
+                    fieldName: 'General / Other',
+                    transactions: nonFieldTrans
+                });
+            }
+
             // Identify missing rates for the selected period
             const missingRatesMap = new Map();
             harvestsRes.data.forEach(h => {
@@ -242,12 +283,14 @@ const Reports = () => {
 
             setReportData({
                 fieldStats,
+                fieldCropStats,
                 totalIncome: fieldStats.reduce((s, f) => s + f.income, 0),
                 totalExpense: fieldStats.reduce((s, f) => s + f.expense, 0),
                 crops,
                 expenseTypes,
                 collectorSummary,
                 transactions: combinedLogs,
+                fieldGroupedTransactions,
                 harvestsCount: harvests.length,
                 missingRates: Array.from(missingRatesMap.values())
             });
@@ -380,6 +423,30 @@ const Reports = () => {
                 headStyles: { fillColor: [59, 130, 246] }
             });
 
+            // 3.5 Field-wise Crop Performance (New)
+            if (reportData.fieldCropStats && reportData.fieldCropStats.length > 0) {
+                doc.setFontSize(14);
+                doc.text("Field-wise Crop Breakdown", 14, doc.lastAutoTable.finalY + 12);
+                const fieldCropBody = [];
+                reportData.fieldCropStats.forEach(f => {
+                    f.crops.forEach((c, idx) => {
+                        fieldCropBody.push([
+                            idx === 0 ? safeText(f.fieldName) : '',
+                            safeText(c.type.toUpperCase()),
+                            `${c.weight.toFixed(2)} kg`,
+                            `Rs. ${c.revenue.toLocaleString()}`
+                        ]);
+                    });
+                });
+
+                autoTable(doc, {
+                    startY: doc.lastAutoTable.finalY + 16,
+                    head: [['Field', 'Crop', 'Weight', 'Revenue']],
+                    body: fieldCropBody,
+                    headStyles: { fillColor: [20, 184, 166] } // Teal
+                });
+            }
+
             // 4. Collector Summary Table (New)
             if (reportData.collectorSummary && reportData.collectorSummary.length > 0) {
                 doc.setFontSize(14);
@@ -400,18 +467,34 @@ const Reports = () => {
             doc.addPage();
             doc.setFontSize(16);
             doc.text("Detailed Transaction Log", 14, 20);
-            autoTable(doc, {
-                startY: 25,
-                head: [['Date', 'Type', 'Field', 'Details', 'Amount']],
-                body: reportData.transactions.map(t => [
-                    t.date,
-                    t.type,
-                    safeText(t.field),
-                    safeText(t.details),
-                    `Rs. ${t.amount.toLocaleString()}`
-                ]),
-                alternateRowStyles: { fillColor: [248, 250, 252] },
-                headStyles: { fillColor: [100, 116, 139] }
+
+            let currentY = 25;
+            reportData.fieldGroupedTransactions.forEach(group => {
+                // Check if we need a new page for the header
+                if (currentY > 260) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(12);
+                doc.setTextColor(30, 41, 59);
+                doc.text(`Field: ${group.fieldName}`, 14, currentY + 5);
+
+                autoTable(doc, {
+                    startY: currentY + 8,
+                    head: [['Date', 'Type', 'Details', 'Amount']],
+                    body: group.transactions.map(t => [
+                        t.date,
+                        t.type,
+                        safeText(t.details),
+                        `Rs. ${t.amount.toLocaleString()}`
+                    ]),
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    headStyles: { fillColor: [100, 116, 139] },
+                    margin: { left: 14, right: 14 }
+                });
+
+                currentY = doc.lastAutoTable.finalY + 10;
             });
 
             const fileName = `Report_${startDate}_${endDate}.pdf`;

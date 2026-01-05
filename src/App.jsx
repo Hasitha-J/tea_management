@@ -11,12 +11,54 @@ import LogPortal from './pages/LogPortal';
 import MoreMenu from './pages/MoreMenu';
 import Collectors from './pages/Collectors';
 
-import { LanguageProvider } from './LanguageContext';
+import { LanguageProvider, useLanguage } from './LanguageContext';
+import { App as CapApp } from '@capacitor/app';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { NotificationService } from './NotificationService';
+
+const BackButtonHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const setupListener = async () => {
+      const listener = await CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (location.pathname !== '/') {
+          navigate(-1);
+        } else {
+          CapApp.exitApp();
+        }
+      });
+      return listener;
+    };
+
+    const listenerPromise = setupListener();
+
+    return () => {
+      listenerPromise.then(l => l.remove());
+    };
+  }, [location, navigate]);
+
+  return null;
+};
+
+const NotificationHandler = () => {
+  const { language } = useLanguage();
+
+  useEffect(() => {
+    NotificationService.scheduleDailyReminder(language);
+  }, [language]);
+
+  return null;
+};
 
 function App() {
   return (
     <LanguageProvider>
+      <NotificationHandler />
       <HashRouter>
+        <BackButtonHandler />
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />

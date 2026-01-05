@@ -116,6 +116,8 @@ export const translations = {
         pendingRate: "Rate Pending",
         selectCollector: "Select Collector...",
         cashSale: "Cash Sale / Other",
+        notifTitle: "Daily Reminder",
+        notifBody: "Don't forget to log your work for today!",
     },
     si: {
         dashboard: "විශ්ලේෂණය",
@@ -234,5 +236,7 @@ export const translations = {
         pendingRate: "මිල තීරණය කර නොමැත",
         selectCollector: "එකතු කරන්නා තෝරන්න...",
         cashSale: "අත්පිට මුදලට විකිණීම",
+        notifTitle: "දෛනික මතක් කිරීම",
+        notifBody: "අද දවසේ වැඩ කටයුතු ඇතුළත් කිරීමට අමතක නොකරන්න.",
     }
 };
