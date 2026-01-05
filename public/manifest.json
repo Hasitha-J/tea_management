@@ -8,9 +8,9 @@
     "description": "Tea Estate Management System",
     "icons": [
         {
-            "src": "vite.svg",
-            "sizes": "32x32",
-            "type": "image/svg+xml"
+            "src": "logo1.png",
+            "sizes": "512x512",
+            "type": "image/png"
         }
     ]
 }
