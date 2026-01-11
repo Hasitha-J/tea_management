@@ -134,7 +134,7 @@ const IncomeForm = () => {
                             >
                                 <option value="">{t('selectField')}</option>
                                 {fields.map(f => (
-                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                    <option key={f.id} value={f.id}>{t(f.name)}</option>
                                 ))}
                             </select>
                         </div>
@@ -176,7 +176,7 @@ const IncomeForm = () => {
                                 >
                                     <option value="">{t('selectCollector')}</option>
                                     {collectors.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                        <option key={c.id} value={c.id}>{t(c.name)}</option>
                                     ))}
                                     <option value="cash" className="font-bold text-emerald-600">{t('cashSale')}</option>
                                 </select>

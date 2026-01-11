@@ -4,7 +4,7 @@ import { useLanguage } from '../LanguageContext';
 import { supabase } from '../supabaseClient';
 
 const Settings = () => {
-    const { language, setLanguage, t } = useLanguage();
+    const { language, setLanguage, combinedLoggingMode, toggleCombinedLogging, t } = useLanguage();
     const [activities, setActivities] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', default_rate: '' });
@@ -84,6 +84,20 @@ const Settings = () => {
                             <option value="en">{t('english')}</option>
                             <option value="si">{t('sinhala')}</option>
                         </select>
+                    </div>
+                    <div className="flex items-center justify-between pt-5 border-t border-gray-100 mt-5">
+                        <div className="pr-4">
+                            <p className="font-medium text-gray-800">{t('combinedMode')}</p>
+                            <p className="text-[10px] md:text-xs text-gray-500">{t('combinedModeDesc')}</p>
+                        </div>
+                        <button
+                            onClick={toggleCombinedLogging}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${combinedLoggingMode ? 'bg-emerald-600' : 'bg-gray-200'}`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${combinedLoggingMode ? 'translate-x-6' : 'translate-x-1'}`}
+                            />
+                        </button>
                     </div>
                 </div>
             </div>

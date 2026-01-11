@@ -41,9 +41,9 @@ const History = () => {
             setFields(fieldsRes.data || []);
             const rates = ratesRes.data || [];
 
-            const flattenedTrans = transRes.data.map(t => ({
-                ...t,
-                field_name: t.fields?.name
+            const flattenedTrans = transRes.data.map(tr => ({
+                ...tr,
+                field_name: tr.fields?.name || t('generalEstateWide')
             }));
 
             const flattenedHarv = harvRes.data.map(h => {
@@ -79,7 +79,7 @@ const History = () => {
 
     const filteredTransactions = selectedField === 'all'
         ? transactions
-        : transactions.filter(t => t.field_id === parseInt(selectedField));
+        : transactions.filter(t => String(t.field_id) === String(selectedField === 'general' ? null : selectedField));
 
     const filteredHarvests = selectedField === 'all'
         ? harvests
@@ -209,6 +209,7 @@ const History = () => {
                             className="text-sm bg-gray-50 border border-gray-200 text-gray-700 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20"
                         >
                             <option value="all">{t('allFields')}</option>
+                            <option value="general">{t('generalEstateWide')}</option>
                             {fields.map(f => (
                                 <option key={f.id} value={f.id}>{f.name}</option>
                             ))}
@@ -246,7 +247,7 @@ const History = () => {
                                             {item.date}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 font-medium text-gray-800">
-                                            {item.field_name}
+                                            {t(item.field_name)}
                                         </td>
                                         <td className={`px-4 md:px-6 py-4 text-right font-bold ${activeTab === 'income' ? 'text-emerald-600' : 'text-gray-900'}`}>
                                             Rs. {item.total_amount?.toLocaleString()}

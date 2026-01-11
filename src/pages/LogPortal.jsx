@@ -1,17 +1,22 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Sprout, HandCoins, ArrowRight } from 'lucide-react';
+import { Sprout, HandCoins, ArrowRight, Plus } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 const LogPortal = () => {
-    const { t } = useLanguage();
+    const { t, combinedLoggingMode } = useLanguage();
 
     const portals = [
         {
             to: '/income',
-            title: t('logIncome'),
-            desc: t('logIncomeDesc'),
-            icon: <Sprout size={32} className="text-emerald-500" />,
+            title: combinedLoggingMode ? `${t('logHarvest')} & ${t('assocExpenses')}` : t('logIncome'),
+            desc: combinedLoggingMode ? t('combinedModeDesc') : t('logIncomeDesc'),
+            icon: combinedLoggingMode ? (
+                <div className="relative">
+                    <Sprout size={32} className="text-emerald-500" />
+                    <Plus size={16} className="absolute -bottom-1 -right-1 text-emerald-600 font-bold bg-white rounded-full border border-emerald-100" />
+                </div>
+            ) : <Sprout size={32} className="text-emerald-500" />,
             bg: 'bg-emerald-50',
             border: 'border-emerald-100'
         },

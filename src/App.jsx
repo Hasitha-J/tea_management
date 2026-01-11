@@ -10,6 +10,7 @@ import Reports from './pages/Reports';
 import LogPortal from './pages/LogPortal';
 import MoreMenu from './pages/MoreMenu';
 import Collectors from './pages/Collectors';
+import CombinedLogForm from './pages/CombinedLogForm';
 
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { App as CapApp } from '@capacitor/app';
@@ -53,25 +54,32 @@ const NotificationHandler = () => {
   return null;
 };
 
+const AppRoutes = () => {
+  const { combinedLoggingMode } = useLanguage();
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="income" element={combinedLoggingMode ? <CombinedLogForm /> : <IncomeForm />} />
+        <Route path="expenses" element={<ExpenseForm />} />
+        <Route path="history" element={<History />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="log" element={<LogPortal />} />
+        <Route path="more" element={<MoreMenu />} />
+        <Route path="collectors" element={<Collectors />} />
+      </Route>
+    </Routes>
+  );
+};
+
 function App() {
   return (
     <LanguageProvider>
       <NotificationHandler />
       <HashRouter>
         <BackButtonHandler />
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="income" element={<IncomeForm />} />
-            <Route path="expenses" element={<ExpenseForm />} />
-            <Route path="history" element={<History />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="log" element={<LogPortal />} />
-            <Route path="more" element={<MoreMenu />} />
-            <Route path="collectors" element={<Collectors />} />
-          </Route>
-        </Routes>
+        <AppRoutes />
       </HashRouter>
     </LanguageProvider>
   );

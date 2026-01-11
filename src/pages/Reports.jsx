@@ -161,12 +161,27 @@ const Reports = () => {
                     .reduce((sum, t) => sum + (t.total_amount || 0), 0);
                 return {
                     id: field.id,
-                    name: field.name,
+                    name: t(field.name),
                     income,
                     expense,
                     profit: income - expense
                 };
             });
+
+            // Add General Expenses to field stats
+            const generalExpenseTotal = transactions
+                .filter(t => !t.field_id)
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
+            if (generalExpenseTotal > 0) {
+                fieldStats.push({
+                    id: 'general',
+                    name: t('generalEstateWide'),
+                    income: 0,
+                    expense: generalExpenseTotal,
+                    profit: -generalExpenseTotal
+                });
+            }
 
             // Field-wise Crop Summary (New)
             const fieldCropStats = fields.map(field => {
@@ -186,7 +201,7 @@ const Reports = () => {
                     return acc;
                 }, []);
                 return {
-                    fieldName: field.name,
+                    fieldName: t(field.name),
                     crops: cropBreakdown
                 };
             }).filter(f => f.crops.length > 0);
@@ -219,21 +234,22 @@ const Reports = () => {
                     .reduce((sum, t) => sum + (t.total_amount || 0), 0);
                 return { ...type, amount };
             }).filter(e => e.amount > 0);
+
             // Combined activities for full log
             const combinedLogs = [
                 ...harvests.map(h => ({
                     date: h.date,
                     type: 'Income',
-                    field: fields.find(f => f.id === h.field_id)?.name || '-',
+                    field: t(fields.find(f => f.id === h.field_id)?.name || '-'),
                     details: h.crop_type === 'tea' ? `${h.crop_type} (${collectors.find(c => c.id === h.collector_id)?.name || '?'})` : h.crop_type,
                     amount: h.total_amount
                 })),
-                ...transactions.map(t => ({
-                    date: t.date,
+                ...transactions.map(tr => ({
+                    date: tr.date,
                     type: 'Expense',
-                    field: fields.find(f => f.id === t.field_id)?.name || '-',
-                    details: t.description || t.type,
-                    amount: t.total_amount
+                    field: t(fields.find(f => f.id === tr.field_id)?.name || t('generalEstateWide')),
+                    details: tr.description || tr.type,
+                    amount: tr.total_amount
                 })),
                 ...advances.map(a => ({
                     date: a.date,
@@ -252,6 +268,15 @@ const Reports = () => {
                     transactions: fieldTrans
                 };
             }).filter(f => f.transactions.length > 0);
+
+            // Add a group for general transactions
+            const generalTrans = combinedLogs.filter(l => l.field === t('generalEstateWide'));
+            if (generalTrans.length > 0) {
+                fieldGroupedTransactions.push({
+                    fieldName: t('generalEstateWide'),
+                    transactions: generalTrans
+                });
+            }
 
             // Add a group for non-field transactions (e.g. advances)
             const nonFieldTrans = combinedLogs.filter(l => l.field === '-');

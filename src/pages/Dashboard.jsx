@@ -67,6 +67,21 @@ const Dashboard = () => {
                 };
             });
 
+            // Calculate General Expenses (not tied to any field)
+            const generalExpense = transactions
+                .filter(t => !t.field_id)
+                .reduce((sum, t) => sum + (t.total_amount || 0), 0);
+
+            if (generalExpense > 0) {
+                dashboardData.push({
+                    field_id: 'general',
+                    field_name: t('generalEstateWide'),
+                    total_income: 0,
+                    total_expense: generalExpense,
+                    net_profit: -generalExpense
+                });
+            }
+
             // Check for missing rates in the previous month for notification
             const prevMonthDate = new Date();
             prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
@@ -86,8 +101,8 @@ const Dashboard = () => {
                 !rates.find(r => r.collector_id === cid && r.month === prevMonth && r.year === prevYear)
             );
 
-            const totalIncome = dashboardData.reduce((acc, curr) => acc + curr.total_income, 0);
-            const totalExpense = dashboardData.reduce((acc, curr) => acc + curr.total_expense, 0);
+            const totalIncome = harvests.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+            const totalExpense = transactions.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
             const totalProfit = totalIncome - totalExpense;
 
             setData({
@@ -120,7 +135,7 @@ const Dashboard = () => {
 
     const filteredFields = selectedFieldId === 'all'
         ? fields
-        : fields.filter(f => f.field_id === parseInt(selectedFieldId));
+        : fields.filter(f => String(f.field_id) === String(selectedFieldId));
 
     const displaySummary = selectedFieldId === 'all'
         ? summary
@@ -134,8 +149,8 @@ const Dashboard = () => {
         <div className="space-y-6 md:space-y-8 pb-32">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{t('dashboard')} Overview</h2>
-                    <p className="text-sm md:text-base text-gray-500 mt-1">Estate-wide performance summary.</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{t('dashboard')}</h2>
+                    <p className="text-sm md:text-base text-gray-500 mt-1">{t('estateSummary')}</p>
                 </div>
             </div>
 
@@ -186,7 +201,7 @@ const Dashboard = () => {
             {/* Split Chart Section */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-                    <h3 className="text-xl font-bold text-gray-800">Field Performance</h3>
+                    <h3 className="text-xl font-bold text-gray-800">{t('fieldPerformance')}</h3>
 
                     <div className="w-full sm:w-64">
                         <select
@@ -197,7 +212,7 @@ const Dashboard = () => {
                         >
                             <option value="all">Compare All Fields</option>
                             {fields.map(f => (
-                                <option key={f.field_id} value={f.field_id}>{f.field_name}</option>
+                                <option key={f.field_id} value={f.field_id}>{t(f.field_name)}</option>
                             ))}
                         </select>
                     </div>
@@ -206,7 +221,7 @@ const Dashboard = () => {
                 <div className="overflow-x-auto">
                     <div className="h-80 min-w-[300px] md:min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={filteredFields}>
+                            <BarChart data={filteredFields.map(f => ({ ...f, field_name: t(f.field_name) }))}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                 <XAxis
                                     dataKey="field_name"

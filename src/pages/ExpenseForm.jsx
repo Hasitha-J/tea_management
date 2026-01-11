@@ -106,8 +106,8 @@ const ExpenseForm = () => {
         setStatus({ type: '', message: '' });
 
         // Enhanced Validation
-        if (!formData.field_id) {
-            setStatus({ type: 'error', message: 'Please select a field.' });
+        if (!formData.field_id && formData.type === 'labor_cost') {
+            setStatus({ type: 'error', message: 'Please select a field for labor costs.' });
             return;
         }
 
@@ -124,7 +124,7 @@ const ExpenseForm = () => {
         // Sanitize Payload for Supabase (Ensure numbers are numbers, empty strings are null)
         const payload = {
             date: formData.date,
-            field_id: parseInt(formData.field_id),
+            field_id: (formData.field_id && formData.field_id !== 'general') ? parseInt(formData.field_id) : null,
             type: formData.type,
             category_id: formData.category_id ? parseInt(formData.category_id) : null,
             description: formData.description || null,
@@ -305,8 +305,9 @@ const ExpenseForm = () => {
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                             >
                                 <option value="">{t('selectField')}</option>
+                                <option value="general">{t('generalEstateWide')}</option>
                                 {fields.map(f => (
-                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                    <option key={f.id} value={f.id}>{t(f.name)}</option>
                                 ))}
                             </select>
                         </div>
